@@ -45,7 +45,7 @@ def demo():
     import mayavi.mlab as mlab
     from viz_util import draw_lidar, draw_lidar_simple, draw_gt_boxes3d
     dataset = kitti_object(os.path.join(ROOT_DIR, 'dataset/KITTI/object'))
-    data_idx = 0
+    data_idx = 8
 
     # Load data from dataset
     objects = dataset.get_label_objects(data_idx)
@@ -163,6 +163,8 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
     Output:
         None (will write a .pickle file to the disk)
     '''
+    print(idx_filename)
+
     dataset = kitti_object(os.path.join(ROOT_DIR,'dataset/KITTI/object'), split)
     data_idx_list = [int(line.rstrip()) for line in open(idx_filename)]
 
@@ -336,6 +338,7 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
     Output:
         None (will write a .pickle file to the disk)
     '''
+    print(det_filename)
     dataset = kitti_object(os.path.join(ROOT_DIR, 'dataset/KITTI/object'), split)
     det_id_list, det_type_list, det_box2d_list, det_prob_list = \
         read_det_file(det_filename)
