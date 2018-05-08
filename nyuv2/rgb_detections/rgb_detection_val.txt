@@ -1,0 +1,11 @@
+dataset/KITTI/object/training/image_2/000008.png 1 0.0247923 823 167 832 188
+dataset/KITTI/object/training/image_2/000008.png 2 0.999218 883 179 956 239
+dataset/KITTI/object/training/image_2/000008.png 2 0.999209 739 168 787 208
+dataset/KITTI/object/training/image_2/000008.png 2 0.998607 861 173 888 194
+dataset/KITTI/object/training/image_2/000008.png 2 0.9974 945 206 1237 375
+dataset/KITTI/object/training/image_2/000008.png 2 0.996834 331 172 615 359
+dataset/KITTI/object/training/image_2/000008.png 2 0.994989 595 174 717 262
+dataset/KITTI/object/training/image_2/000008.png 2 0.967459 767 170 803 201
+dataset/KITTI/object/training/image_2/000008.png 2 0.963168 607 164 696 228
+dataset/KITTI/object/training/image_2/000008.png 2 0.958746 3 173 412 370
+dataset/KITTI/object/training/image_2/000008.png 2 0.621929 803 165 826 183
