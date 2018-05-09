@@ -29,12 +29,12 @@ class Object3d(object):
         self.box2d = np.array([self.xmin,self.ymin,self.xmax,self.ymax])
         
         # extract 3d bounding box information
-        self.h = data[9] # box height
-        self.w = data[10] # box width
+        self.h = data[10] # box height
+        self.w = data[9] # box width
         self.l = data[8] # box length (in meters)
         self.t = (data[5],data[6],data[7]) # location (x,y,z) in camera coord.
         self.ry = data[11]*np.pi/180 # yaw angle (around Y-axis in camera coordinates) [-pi..pi]
-
+        print("999999999999999999999999999999999999",self.t)
     def print_object(self):
         print('Type: %s' % \
             (self.type))
@@ -86,7 +86,26 @@ class Calibration(object):
         else:
             calibs = self.read_calib_file(calib_filepath)
         # Projection matrix from rect camera coord to image2 coord /////---> World2Frame?
-        self.P = calibs['P2'] 
+        print("..................................::",calibs['P2'])
+        t_x = 2.5031875059141302e-02;
+        t_z = -2.9342312935846411e-04;
+        t_y = 6.6238747008330102e-04;
+        fx_rgb = 5.1885790117450188e+02;
+        fy_rgb = 5.1946961112127485e+02;
+        cx_rgb = 3.2558244941119034e+02;
+        cy_rgb = 2.5373616633400465e+02;
+        
+        fx_d = 5.8262448167737955e+02;
+        fy_d = 5.8269103270988637e+02;
+        cx_d = 3.1304475870804731e+02;
+        cy_d = 2.3844389626620386e+02;
+        
+        #P = [fx_rgb,0.00000,cx_rgb, t_x, 0.00000,fy_rgb,cy_rgb, t_y, 0.00000,0.00000,1.00000, t_z]
+        P = [fx_rgb,0.00000,285.58245, 0, 0.00000,fy_rgb,209.73617, 0, 0.00000,0.00000,1.00000, 0]
+        #P = [fx_d,0.00000,285.58245, 0, 0.00000,fy_d,209.73617, 0, 0.00000,0.00000,1.00000, 0]
+        
+        #self.P = calibs['P2'] 
+        self.P = P
         self.P = np.reshape(self.P, [3,4])
         # Rigid transform from Velodyne coord to reference camera coord ------> extrinsic params of the sensor
         self.V2C = calibs['Tr_velo_to_cam']
@@ -101,20 +120,12 @@ class Calibration(object):
         self.c_v = self.P[1,2]
         self.f_u = self.P[0,0]
         self.f_v = self.P[1,1]
+        #self.b_x = self.P[0,3] # relative 
+        #self.b_y = self.P[1,3]
         self.b_x = self.P[0,3]/(-self.f_u) # relative 
         self.b_y = self.P[1,3]/(-self.f_v)
         
-        #TODO intrinsics hardcoded only for now
-        #518.85790     0.00000   285.58245
-        #0.00000   519.46961   
-        #0.00000     0.00000     1.00000
         
-        self.c_u = 285.58245
-        self.c_v = 209.73617
-        self.f_u = 518.85790
-        self.f_v = 519.46961
-        #self.b_x = self.P[0,3]/(-self.f_u) # relative 
-        #self.b_y = self.P[1,3]/(-self.f_v)
    
 
     def read_calib_file(self, filepath):
@@ -291,14 +302,7 @@ def read_label(label_filename, box2d_filename,box3d_filename):
     lines = [str(el1[0])+" "+' '.join(map(str, el2))+" "+' '.join(map(str, el3)) for el1,el2,el3 in zip(labels,boxes2d,boxes3d)]
     print("TO:",lines)
     objects = [Object3d(line) for line in lines] 
-
-    #TODO recreate object for Nyuv (check code below)
-    '''
-    label_filename = "/home/delia/src/Occipital/frustum-pointnets/dataset/KITTI/object/training/label_2/000008.txt"
-    lines = [line.rstrip() for line in open(label_filename)]
-    print(lines)
-    objects = [Object3d(line) for line in lines] #In the labels file from KITTI there are 15 values as boxes, score, rotation etc
-    '''    
+    
     return objects
 
 def load_image(img_filename):
@@ -340,18 +344,31 @@ def compute_box_3d(obj, P):
             corners_3d: (8,3) array in in rect camera coord.
     '''
     # compute rotational matrix around yaw axis
-    R = roty(obj.ry)    
-    print("here")
+    R = roty(obj.ry)   
+
     # 3d bounding box dimensions
     l = obj.l;
     w = obj.w;
     h = obj.h;
+   
+    print(obj.l)
+    print(obj.w)
+    print(obj.h)
+     #[        half_L, half_H, half_W;
+     #        -half_L, half_H, half_W;
+     #        -half_L, half_H, -half_W;
+     #         half_L, half_H, -half_W;
+     #         half_L, -half_H, half_W;
+     #        -half_L, -half_H, half_W;
+     #        -half_L, -half_H, -half_W;
+     #         half_L, -half_H, -half_W];
+    
     
     # 3d bounding box corners
-    x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2];
-    y_corners = [0,0,0,0,-h,-h,-h,-h];
-    z_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2];
-    
+    x_corners = [l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2,l/2];
+    y_corners = [h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2];
+    z_corners = [w/2, w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2];
+    print([x_corners,y_corners,z_corners])
     # rotate and translate 3d bounding box
     corners_3d = np.dot(R, np.vstack([x_corners,y_corners,z_corners]))
     #print corners_3d.shape

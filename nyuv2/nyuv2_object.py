@@ -131,6 +131,10 @@ def show_image_with_boxes(img, objects, calib, show3d=True):
     ''' Show image with 2D bounding boxes '''
     img1 = np.copy(img) # for 2d bbox
     img2 = np.copy(img) # for 3d bbox
+    
+    #obj = objects[3] #TODO togliere
+    #objects = [obj] #TODO togliere
+    
     for obj in objects:
         print(obj.type)
         #if obj.type==0:continue
@@ -139,7 +143,7 @@ def show_image_with_boxes(img, objects, calib, show3d=True):
         box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) #TODO ripristinare
         img2 = utils.draw_projected_box3d(img2, box3d_pts_2d)  #TODO ripristinare
     Image.fromarray(img1).show()
-    if show3d: #TODO ripristinare
+    if show3d: 
         Image.fromarray(img2).show() #TODO ripristinare
 
 def get_lidar_in_image_fov(pc_velo, calib, xmin, ymin, xmax, ymax,

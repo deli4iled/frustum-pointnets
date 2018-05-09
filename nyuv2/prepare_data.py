@@ -47,7 +47,7 @@ def demo():
     print("###############################")
     print(ROOT_DIR)
     dataset = nyuv2_object(os.path.join(ROOT_DIR, 'dataset/NYUv2/object'))
-    data_idx = 3
+    data_idx = 4
 
     # Load data from dataset
     objects = dataset.get_label_objects(data_idx)
