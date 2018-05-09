@@ -55,7 +55,7 @@ class nyuv2_object(object):
 
     def get_lidar(self, idx): 
         assert(idx<self.num_samples) 
-        lidar_filename = os.path.join(self.lidar_dir, '%d.bin'%(idx))
+        lidar_filename = os.path.join(self.lidar_dir, '%d.mat'%(idx))
         return utils.load_velo_scan(lidar_filename)
 
     def get_calibration(self, idx):

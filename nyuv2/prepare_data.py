@@ -57,7 +57,7 @@ def demo():
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
     img_height, img_width, img_channel = img.shape
     print(('Image shape: ', img.shape))
-    #pc_velo = dataset.get_lidar(data_idx)[:,0:3] #TODO
+    pc_velo = dataset.get_lidar(data_idx) #TODO
     calib = dataset.get_calibration(data_idx)  #TODO
 
     ## Draw lidar in rect camera coord
@@ -71,10 +71,12 @@ def demo():
     show_image_with_boxes(img, objects, calib)
     raw_input()
     exit() #TODO
+    
     # Show all LiDAR points. Draw 3d box in LiDAR point cloud
     print(' -------- LiDAR points and 3D boxes in velodyne coordinate --------')
-    #show_lidar_with_boxes(pc_velo, objects, calib)
-    #raw_input()
+    show_lidar_with_boxes(pc_velo, objects, calib)
+    raw_input()
+    
     show_lidar_with_boxes(pc_velo, objects, calib, True, img_width, img_height)
     raw_input()
 
@@ -168,9 +170,11 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
     '''
     print(idx_filename)
 
-    dataset = kitti_object(os.path.join(ROOT_DIR,'dataset/KITTI/object'), split)
+    dataset = nyuv2_object(os.path.join(ROOT_DIR,'dataset/NYUv2/object'), split)
     data_idx_list = [int(line.rstrip()) for line in open(idx_filename)]
-
+    data_idx_list  = [3,4] #TODO togliere
+    print("+++++++++++++++++++++++++++**",data_idx_list)
+    
     id_list = [] # int number
     box2d_list = [] # [xmin,ymin,xmax,ymax]
     box3d_list = [] # (8,3) array in rect camera coord
@@ -188,20 +192,26 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         print('------------- ', data_idx)
         calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
         objects = dataset.get_label_objects(data_idx)
-        pc_velo = dataset.get_lidar(data_idx)
-        pc_rect = np.zeros_like(pc_velo)
-        pc_rect[:,0:3] = calib.project_velo_to_rect(pc_velo[:,0:3])
-        pc_rect[:,3] = pc_velo[:,3]
+        
+        pc_velo = dataset.get_lidar(data_idx) #TODO take x,y,z coords in camera
+        
+        
+        
+        #pc_rect = np.zeros_like(pc_velo)
+        #pc_rect[:,0:3] = calib.project_velo_to_rect(pc_velo[:,0:3])
+        #pc_rect[:,3] = pc_velo[:,3]
+        
         img = dataset.get_image(data_idx)
-        img_height, img_width, img_channel = img.shape
-        _, pc_image_coord, img_fov_inds = get_lidar_in_image_fov(pc_velo[:,0:3],
-            calib, 0, 0, img_width, img_height, True)
-
+        
+        #img_height, img_width, img_channel = img.shape
+        #_, pc_image_coord, img_fov_inds = get_lidar_in_image_fov(pc_velo[:,0:3],
+        #    calib, 0, 0, img_width, img_height, True)
         for obj_idx in range(len(objects)):
-            if objects[obj_idx].type not in type_whitelist :continue
+            #if objects[obj_idx].type not in type_whitelist :continue
 
             # 2D BOX: Get pts rect backprojected 
             box2d = objects[obj_idx].box2d
+            print("\n\n\n\n\n",box2d)
             for _ in range(augmentX):
                 # Augment data by box2d perturbation
                 if perturb_box2d:
@@ -484,7 +494,7 @@ if __name__=='__main__':
         type_whitelist = ['Car']
         output_prefix = 'frustum_caronly_'
     else:
-        type_whitelist = ['Car', 'Pedestrian', 'Cyclist']
+        type_whitelist = []
         output_prefix = 'frustum_carpedcyc_'
 
     if args.gen_train:

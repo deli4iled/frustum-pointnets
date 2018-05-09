@@ -307,12 +307,55 @@ def read_label(label_filename, box2d_filename,box3d_filename):
 
 def load_image(img_filename):
     return cv2.imread(img_filename)
-
+    
 def load_velo_scan(velo_filename):
-    scan = np.fromfile(velo_filename, dtype=np.float32)
-    scan = scan.reshape((-1, 4))
-    return scan
+    '''
+    [h, w] = size(rawDepth);
+    cx = K(1,3); cy = K(2,3);  
+    fx = K(1,1); fy = K(2,2);
+    [x, y] = meshgrid(1:w, 1:h);   
+    x3 = (x-cx).*rawDepth/fx;  
+    y3 = (y-cy).*rawDepth/fy;
+    z3 = rawDepth;
+    xyz = cat(3, x3, y3, z3);
+    '''
+    
+    dmap_f = sio.loadmat(velo_filename)
+    dmap_f = dmap_f['dmap_f'].astype(np.float)
+    fx_d = 5.8262448167737955e+02;
+    fy_d = 5.8269103270988637e+02;
+    cx_d = 3.1304475870804731e+02;
+    cy_d = 2.3844389626620386e+02;
+    K = [fx_d,0.00000,cx_d, 0.00000,fy_d,cy_d, 0.00000,0.00000,1.00000]
+    
+    
+    w,h = dmap_f.shape
+    print("dmap_f.shape",w,h)
+    xt = np.linspace(1, h,h )
+    yt = np.linspace(1, w,w )
+    x, y = np.meshgrid(xt, yt)
+    print(x)
+    x3 = (x-cx_d)*dmap_f/fx_d;  
+    y3 = (y-cy_d)*dmap_f/fy_d;
+    z3 = dmap_f;
+    res = np.stack([x3,y3,z3])
+    
+    print(x3)
+    print(res.shape)
+    
+    #TODO check right order of data
+    return res
 
+'''
+def load_velo_scan(velo_filename):
+    print("........................:",velo_filename)
+    scan = np.fromfile(velo_filename, dtype=np.float32)
+    print(scan.shape)
+    scan = scan.reshape((427,561))
+    print(scan.shape)
+    print("#############################################################")
+    return scan
+'''
 def project_to_image(pts_3d, P):
     ''' Project 3d points to image plane.
 
