@@ -24,6 +24,7 @@ from train_util import get_batch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
+parser.add_argument('--cpu', action='store_true', help='use CPU instead GPU')
 parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
 parser.add_argument('--model', default='frustum_pointnets_v1', help='Model name [default: frustum_pointnets_v1]')
 parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]')
@@ -54,7 +55,14 @@ def get_session_and_ops(batch_size, num_point):
     create session and return session handle and tensors
     '''
     with tf.Graph().as_default():
-        with tf.device('/gpu:'+str(GPU_INDEX)):
+      
+        device_string = 'specify_a_device_type'
+        if FLAGS.cpu:
+          device_string = '/cpu:0'
+        else:
+          device_string = '/gpu:'+str(GPU_INDEX)
+        
+        with tf.device(device_string):
             pointclouds_pl, one_hot_vec_pl, labels_pl, centers_pl, \
             heading_class_label_pl, heading_residual_label_pl, \
             size_class_label_pl, size_residual_label_pl = \
@@ -228,7 +236,7 @@ def test_from_rgb_detection(output_filename, result_dir=None):
         batch_one_hot_to_feed[0:cur_batch_size,:] = batch_one_hot_vec
 
         # Run one batch inference
-	batch_output, batch_center_pred, \
+        batch_output, batch_center_pred, \
         batch_hclass_pred, batch_hres_pred, \
         batch_sclass_pred, batch_sres_pred, batch_scores = \
             inference(sess, ops, batch_data_to_feed,
@@ -307,7 +315,7 @@ def test(output_filename, result_dir=None):
             get_batch(TEST_DATASET, test_idxs, start_idx, end_idx,
                 NUM_POINT, NUM_CHANNEL)
 
-	batch_output, batch_center_pred, \
+        batch_output, batch_center_pred, \
         batch_hclass_pred, batch_hres_pred, \
         batch_sclass_pred, batch_sres_pred, batch_scores = \
             inference(sess, ops, batch_data,

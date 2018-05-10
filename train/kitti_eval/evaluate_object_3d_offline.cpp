@@ -872,7 +872,7 @@ bool eval(string gt_dir, string result_dir, Mail* mail){
   printf("Finished 2D bounding box eval.\n");
   // don't evaluate AOS for birdview boxes and 3D boxes
   compute_aos = false;
-
+  /*
   // eval bird's eye view bounding boxes
   for (int c = 0; c < NUM_CLASS; c++) {
     CLASSES cls = (CLASSES)c;
@@ -890,7 +890,7 @@ bool eval(string gt_dir, string result_dir, Mail* mail){
       saveAndPlotPlots(plot_dir, CLASS_NAMES[c] + "_detection_ground", CLASS_NAMES[c], precision, 0);
     }
   }
-  printf("Finished Birdeye eval.\n");
+  printf("Finished Birdeye eval.\n");*/
 
   // eval 3D bounding boxes
   for (int c = 0; c < NUM_CLASS; c++) {
