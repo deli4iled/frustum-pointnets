@@ -44,21 +44,20 @@ def extract_pc_in_box2d(pc, box2d):
 def demo():
     import mayavi.mlab as mlab
     from viz_util import draw_lidar, draw_lidar_simple, draw_gt_boxes3d
-    print("###############################")
     print(ROOT_DIR)
     dataset = nyuv2_object(os.path.join(ROOT_DIR, 'dataset/NYUv2/object'))
-    data_idx = 4
+    data_idx = 3
 
     # Load data from dataset
     objects = dataset.get_label_objects(data_idx)
     objects[0].print_object()
-    print("??????????????????????",data_idx)
     img = dataset.get_image(data_idx)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
     img_height, img_width, img_channel = img.shape
     print(('Image shape: ', img.shape))
     pc_velo = dataset.get_lidar(data_idx) #TODO
     calib = dataset.get_calibration(data_idx)  #TODO
+    depth = dataset.get_depth(data_idx) 
 
     ## Draw lidar in rect camera coord
     #print(' -------- LiDAR points in rect camera coordination --------')
@@ -70,21 +69,21 @@ def demo():
     print(' -------- 2D/3D bounding boxes in images --------')
     show_image_with_boxes(img, objects, calib)
     raw_input()
-    exit() #TODO
+    
     
     # Show all LiDAR points. Draw 3d box in LiDAR point cloud
     print(' -------- LiDAR points and 3D boxes in velodyne coordinate --------')
     show_lidar_with_boxes(pc_velo, objects, calib)
     raw_input()
     
-    show_lidar_with_boxes(pc_velo, objects, calib, True, img_width, img_height)
-    raw_input()
+    #show_lidar_with_boxes(pc_velo, objects, calib, True, img_width, img_height)
+    #raw_input()
 
     # Visualize LiDAR points on images
     print(' -------- LiDAR points projected to image plane --------')
-    show_lidar_on_image(pc_velo, img, calib, img_width, img_height) 
+    show_lidar_on_image(depth, img, calib, img_width, img_height) 
     raw_input()
-    
+    exit()
     # Show LiDAR points that are in the 3d box
     print(' -------- LiDAR points in a 3D bounding box --------')
     box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(objects[0], calib.P) 
@@ -172,8 +171,8 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
 
     dataset = nyuv2_object(os.path.join(ROOT_DIR,'dataset/NYUv2/object'), split)
     data_idx_list = [int(line.rstrip()) for line in open(idx_filename)]
-    data_idx_list  = [3,4] #TODO togliere
-    print("+++++++++++++++++++++++++++**",data_idx_list)
+    data_idx_list  = [536, 540, 541, 542] #TODO togliere
+    #print("+++++++++++++++++++++++++++**",data_idx_list)
     
     id_list = [] # int number
     box2d_list = [] # [xmin,ymin,xmax,ymax]
@@ -189,7 +188,7 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
     pos_cnt = 0
     all_cnt = 0
     for data_idx in data_idx_list:
-        print('------------- ', data_idx)
+        print('Image number', data_idx)
         calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
         objects = dataset.get_label_objects(data_idx)
         
@@ -198,56 +197,75 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         
         
         #pc_rect = np.zeros_like(pc_velo)
-        #pc_rect[:,0:3] = calib.project_velo_to_rect(pc_velo[:,0:3])
+        depth = dataset.get_depth(data_idx) #TODO only to mantain names, change
+        pc_image_coord = depth_image_to_coords(depth) #TODO only to mantain names, change
+        pc_rect = pc_velo #TODO pc_velo in camera coords, we have depth calibrated --> unnecessary step
+        #print("pc_rect.shape",pc_rect.shape)
+        #pc_rect = calib.project_velo_to_rect(pc_velo)
         #pc_rect[:,3] = pc_velo[:,3]
         
         img = dataset.get_image(data_idx)
         
-        #img_height, img_width, img_channel = img.shape
-        #_, pc_image_coord, img_fov_inds = get_lidar_in_image_fov(pc_velo[:,0:3],
-        #    calib, 0, 0, img_width, img_height, True)
+        img_height, img_width, img_channel = img.shape
+        
+        #_, pc_image_coord, img_fov_inds = get_lidar_in_image_fov(pc_velo,
+         #   calib, 0, 0, img_width, img_height, True)
         for obj_idx in range(len(objects)):
             #if objects[obj_idx].type not in type_whitelist :continue
 
             # 2D BOX: Get pts rect backprojected 
             box2d = objects[obj_idx].box2d
-            print("\n\n\n\n\n",box2d)
+            #print("\nobject number",obj_idx)
+            #print("box2d",box2d)
             for _ in range(augmentX):
                 # Augment data by box2d perturbation
                 if perturb_box2d:
                     xmin,ymin,xmax,ymax = random_shift_box2d(box2d)
-                    print(box2d)
-                    print(xmin,ymin,xmax,ymax)
+                    #print("perturb_box2d",[xmin,ymin,xmax,ymax])
                 else:
                     xmin,ymin,xmax,ymax = box2d
+                
                 box_fov_inds = (pc_image_coord[:,0]<xmax) & \
                     (pc_image_coord[:,0]>=xmin) & \
                     (pc_image_coord[:,1]<ymax) & \
                     (pc_image_coord[:,1]>=ymin)
-                box_fov_inds = box_fov_inds & img_fov_inds
-                pc_in_box_fov = pc_rect[box_fov_inds,:]
+                #print(xmin,ymin,xmax,ymax)
+                #print("--------------------------__")
+                #print("box_fov_inds",np.where(box_fov_inds==True))
+                #box_fov_inds = box_fov_inds & img_fov_inds
+                pc_in_box_fov = pc_rect[box_fov_inds,:] #coordinates of points inside box in camera coordinates
+                #print(pc_in_box_fov)
+                #print("-------------------------------")
                 # Get frustum angle (according to center pixel in 2D BOX)
                 box2d_center = np.array([(xmin+xmax)/2.0, (ymin+ymax)/2.0])
                 uvdepth = np.zeros((1,3))
                 uvdepth[0,0:2] = box2d_center
                 uvdepth[0,2] = 20 # some random depth
+                #print("\nuvdepth",uvdepth)
                 box2d_center_rect = calib.project_image_to_rect(uvdepth)
                 frustum_angle = -1 * np.arctan2(box2d_center_rect[0,2],
                     box2d_center_rect[0,0])
                 # 3D BOX: Get pts velo in 3d box
                 obj = objects[obj_idx]
                 box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) 
-                _,inds = extract_pc_in_box3d(pc_in_box_fov, box3d_pts_3d)
+                _,inds = extract_pc_in_box3d(pc_in_box_fov, box3d_pts_3d) #poincliud inside box
                 label = np.zeros((pc_in_box_fov.shape[0]))
-                label[inds] = 1
+                #print("lllllllllllllllllllllllllllL",np.where(inds==True))
+                label[inds] = 1 #Y 1?
                 # Get 3D BOX heading
                 heading_angle = obj.ry
                 # Get 3D BOX size
                 box3d_size = np.array([obj.l, obj.w, obj.h])
-
+                
                 # Reject too far away object or object without points
                 if ymax-ymin<25 or np.sum(label)==0:
+                    #print("ymax-ymin",ymax-ymin)
+                    print("np.sum(label)",np.sum(label))
                     continue
+                else:
+                    #print("ddgdhghghghgH")
+                    #print("ymax-ymin",ymax-ymin)
+                    print("np.sum(label)",np.sum(label))
 
                 id_list.append(data_idx)
                 box2d_list.append(np.array([xmin,ymin,xmax,ymax]))
@@ -262,10 +280,12 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 # collect statistics
                 pos_cnt += np.sum(label)
                 all_cnt += pc_in_box_fov.shape[0]
+                
         
     print('Average pos ratio: %f' % (pos_cnt/float(all_cnt)))
     print('Average npoints: %f' % (float(all_cnt)/len(id_list)))
-    
+    print("\n\n\n\----------------------------",label_list)
+
     with open(output_filename,'wb') as fp:
         pickle.dump(id_list, fp)
         pickle.dump(box2d_list,fp)
@@ -330,7 +350,7 @@ def read_det_file(det_filename):
         box2d_list.append(np.array([float(t[i]) for i in range(3,7)]))
     return id_list, type_list, box2d_list, prob_list
 
- 
+#TODO....
 def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
                                        viz=False,
                                        type_whitelist=['Car'],
@@ -352,7 +372,7 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
         None (will write a .pickle file to the disk)
     '''
     print(det_filename)
-    dataset = kitti_object(os.path.join(ROOT_DIR, 'dataset/KITTI/object'), split)
+    dataset = nyuv2_object(os.path.join(ROOT_DIR, 'dataset/NYUv2/object'), split)
     det_id_list, det_type_list, det_box2d_list, det_prob_list = \
         read_det_file(det_filename)
     cache_id = -1

@@ -34,7 +34,6 @@ class Object3d(object):
         self.l = data[8] # box length (in meters)
         self.t = (data[5],data[6],data[7]) # location (x,y,z) in camera coord.
         self.ry = data[11]*np.pi/180 # yaw angle (around Y-axis in camera coordinates) [-pi..pi]
-        print("999999999999999999999999999999999999",self.t)
     def print_object(self):
         print('Type: %s' % \
             (self.type))
@@ -81,12 +80,11 @@ class Calibration(object):
         TODO(rqi): do matrix multiplication only once for each projection.
     '''
     def __init__(self, calib_filepath, from_video=False):
-        if from_video:
-            calibs = self.read_calib_from_video(calib_filepath)
-        else:
-            calibs = self.read_calib_file(calib_filepath)
+        #if from_video:
+        #    calibs = self.read_calib_from_video(calib_filepath)
+        #else:
+        #    calibs = self.read_calib_file(calib_filepath)
         # Projection matrix from rect camera coord to image2 coord /////---> World2Frame?
-        print("..................................::",calibs['P2'])
         t_x = 2.5031875059141302e-02;
         t_z = -2.9342312935846411e-04;
         t_y = 6.6238747008330102e-04;
@@ -108,12 +106,12 @@ class Calibration(object):
         self.P = P
         self.P = np.reshape(self.P, [3,4])
         # Rigid transform from Velodyne coord to reference camera coord ------> extrinsic params of the sensor
-        self.V2C = calibs['Tr_velo_to_cam']
-        self.V2C = np.reshape(self.V2C, [3,4])
-        self.C2V = inverse_rigid_trans(self.V2C)
+        #self.V2C = calibs['Tr_velo_to_cam']
+        #self.V2C = np.reshape(self.V2C, [3,4])
+        #self.C2V = inverse_rigid_trans(self.V2C)
         # Rotation from reference camera coord to rect camera coord ----------------->
-        self.R0 = calibs['R0_rect']
-        self.R0 = np.reshape(self.R0,[3,3])
+        #self.R0 = calibs['R0_rect']
+        #self.R0 = np.reshape(self.R0,[3,3])
 
         # Camera intrinsics and extrinsics
         self.c_u = self.P[0,2]
@@ -137,7 +135,6 @@ class Calibration(object):
         with open(filepath, 'r') as f:
             for line in f.readlines():
                 line = line.rstrip()
-                print(line)
                 if len(line)==0: continue
                 key, value = line.split(':', 1)
                 # The only non-float values in these files are dates, which
@@ -175,9 +172,10 @@ class Calibration(object):
     # =========================== 
     # ------- 3d to 3d ---------- 
     # =========================== 
-    def project_velo_to_ref(self, pts_3d_velo):
-        pts_3d_velo = self.cart2hom(pts_3d_velo) # nx4
-        return np.dot(pts_3d_velo, np.transpose(self.V2C))
+    #def project_velo_to_ref(self, pts_3d_velo):
+    #    pts_3d_velo = self.cart2hom(pts_3d_velo) # nx4
+    #    print("-------------project_velo_to_ref",self.V2C)
+    #    return np.dot(pts_3d_velo, np.transpose(self.V2C))
 
     def project_ref_to_velo(self, pts_3d_ref):
         pts_3d_ref = self.cart2hom(pts_3d_ref) # nx4
@@ -198,9 +196,9 @@ class Calibration(object):
         pts_3d_ref = self.project_rect_to_ref(pts_3d_rect)
         return self.project_ref_to_velo(pts_3d_ref)
 
-    def project_velo_to_rect(self, pts_3d_velo):
-        pts_3d_ref = self.project_velo_to_ref(pts_3d_velo)
-        return self.project_ref_to_rect(pts_3d_ref)
+    #def project_velo_to_rect(self, pts_3d_velo):
+    #    pts_3d_ref = self.project_velo_to_ref(pts_3d_velo)
+    #    return self.project_ref_to_rect(pts_3d_ref)
 
     # =========================== 
     # ------- 3d to 2d ---------- 
@@ -297,10 +295,7 @@ def read_label(label_filename, box2d_filename,box3d_filename):
     print(box3d_filename)
     boxes3d = sio.loadmat(box3d_filename)
     boxes3d = boxes3d['gt_boxes_3d'].astype(np.float)
-    print("*********************************")
-    print("FROM:",boxes3d)
     lines = [str(el1[0])+" "+' '.join(map(str, el2))+" "+' '.join(map(str, el3)) for el1,el2,el3 in zip(labels,boxes2d,boxes3d)]
-    print("TO:",lines)
     objects = [Object3d(line) for line in lines] 
     
     return objects
@@ -330,21 +325,34 @@ def load_velo_scan(velo_filename):
     
     
     w,h = dmap_f.shape
-    print("dmap_f.shape",w,h)
+
     xt = np.linspace(1, h,h )
     yt = np.linspace(1, w,w )
     x, y = np.meshgrid(xt, yt)
-    print(x)
-    x3 = (x-cx_d)*dmap_f/fx_d;  
-    y3 = (y-cy_d)*dmap_f/fy_d;
-    z3 = dmap_f;
-    res = np.stack([x3,y3,z3])
-    
-    print(x3)
-    print(res.shape)
-    
-    #TODO check right order of data
+
+    x3 = ((x-cx_d)*dmap_f/fx_d).reshape(-1);  
+    y3 = ((y-cy_d)*dmap_f/fy_d).reshape(-1);
+    z3 = dmap_f.reshape(-1);
+    res = np.stack([x3,y3,z3]).T
+   
     return res
+    
+def load_depth(velo_filename):
+    '''
+    [h, w] = size(rawDepth);
+    cx = K(1,3); cy = K(2,3);  
+    fx = K(1,1); fy = K(2,2);
+    [x, y] = meshgrid(1:w, 1:h);   
+    x3 = (x-cx).*rawDepth/fx;  
+    y3 = (y-cy).*rawDepth/fy;
+    z3 = rawDepth;
+    xyz = cat(3, x3, y3, z3);
+    '''
+    
+    dmap_f = sio.loadmat(velo_filename)
+    dmap_f = dmap_f['dmap_f'].astype(np.float)
+       
+    return dmap_f
 
 '''
 def load_velo_scan(velo_filename):
@@ -394,9 +402,7 @@ def compute_box_3d(obj, P):
     w = obj.w;
     h = obj.h;
    
-    print(obj.l)
-    print(obj.w)
-    print(obj.h)
+   
      #[        half_L, half_H, half_W;
      #        -half_L, half_H, half_W;
      #        -half_L, half_H, -half_W;
@@ -411,7 +417,7 @@ def compute_box_3d(obj, P):
     x_corners = [l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2,l/2];
     y_corners = [h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2];
     z_corners = [w/2, w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2];
-    print([x_corners,y_corners,z_corners])
+
     # rotate and translate 3d bounding box
     corners_3d = np.dot(R, np.vstack([x_corners,y_corners,z_corners]))
     #print corners_3d.shape

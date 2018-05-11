@@ -33,7 +33,7 @@ class nyuv2_object(object):
         if split == 'training':
             self.num_samples = 537 #TODO right number
         elif split == 'testing':
-            self.num_samples = 235 #TODO right number
+            self.num_samples = 654 #TODO right number
         else:
             print('Unknown split: %s' % (split))
             exit(-1)
@@ -49,23 +49,30 @@ class nyuv2_object(object):
         return self.num_samples
 
     def get_image(self, idx):
-        assert(idx<self.num_samples) 
+        #assert(idx<self.num_samples) #number are not ordered, so udx can be greater than num samples
         img_filename = os.path.join(self.image_dir, '%d.jpg'%(idx))
         return utils.load_image(img_filename)
 
     def get_lidar(self, idx): 
-        assert(idx<self.num_samples) 
+        #assert(idx<self.num_samples) 
         lidar_filename = os.path.join(self.lidar_dir, '%d.mat'%(idx))
         return utils.load_velo_scan(lidar_filename)
+        
+    def get_depth(self, idx): 
+        #assert(idx<self.num_samples) 
+        lidar_filename = os.path.join(self.lidar_dir, '%d.mat'%(idx))
+        return utils.load_depth(lidar_filename)
 
     def get_calibration(self, idx):
-        assert(idx<self.num_samples) 
+        #assert(idx<self.num_samples) 
         calib_filename = os.path.join(self.calib_dir, '%d.txt'%(idx))
+        print("get_calibration",calib_filename)
         return utils.Calibration(calib_filename)
 
     def get_label_objects(self, idx):
         print(self.num_samples,self.split)
-        assert(idx<self.num_samples and self.split=='training') 
+        #assert(idx<self.num_samples and self.split=='training') 
+        assert(self.split=='training') 
         label_filename = os.path.join(self.label_dir, '%d.mat'%(idx))
         box2d_filename = os.path.join(self.box2d_dir, '%d.mat'%(idx))
         box3d_filename = os.path.join(self.box3d_dir, '%d.mat'%(idx))
@@ -96,13 +103,12 @@ class kitti_object_video(object):
         return self.num_samples
 
     def get_image(self, idx):
-        print("...........................",idx)
-        assert(idx<self.num_samples) 
+        #assert(idx<self.num_samples) 
         img_filename = self.img_filenames[idx]
         return utils.load_image(img_filename)
 
     def get_lidar(self, idx): 
-        assert(idx<self.num_samples) 
+        #assert(idx<self.num_samples) 
         lidar_filename = self.lidar_filenames[idx]
         return utils.load_velo_scan(lidar_filename)
 
@@ -127,6 +133,18 @@ def viz_kitti_video():
         raw_input()
     return
 
+def depth_image_to_coords(dmap_f):
+    w,h = dmap_f.shape
+
+    xt = np.linspace(1, h,h )
+    yt = np.linspace(1, w,w )
+    x, y = np.meshgrid(xt, yt)
+
+    x3 = x.reshape(-1);
+    y3 = y.reshape(-1);
+    z3 = dmap_f.reshape(-1);
+    return np.stack([x3,y3,z3]).T
+
 def show_image_with_boxes(img, objects, calib, show3d=True):
     ''' Show image with 2D bounding boxes '''
     img1 = np.copy(img) # for 2d bbox
@@ -136,15 +154,13 @@ def show_image_with_boxes(img, objects, calib, show3d=True):
     #objects = [obj] #TODO togliere
     
     for obj in objects:
-        print(obj.type)
-        #if obj.type==0:continue
         cv2.rectangle(img1, (int(obj.xmin),int(obj.ymin)),
             (int(obj.xmax),int(obj.ymax)), (0,255,0), 2)
-        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) #TODO ripristinare
-        img2 = utils.draw_projected_box3d(img2, box3d_pts_2d)  #TODO ripristinare
+        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) 
+        img2 = utils.draw_projected_box3d(img2, box3d_pts_2d) 
     Image.fromarray(img1).show()
     if show3d: 
-        Image.fromarray(img2).show() #TODO ripristinare
+        Image.fromarray(img2).show() 
 
 def get_lidar_in_image_fov(pc_velo, calib, xmin, ymin, xmax, ymax,
                            return_more=False, clip_distance=2.0):
@@ -179,34 +195,41 @@ def show_lidar_with_boxes(pc_velo, objects, calib,
         if obj.type=='DontCare':continue
         # Draw 3d bounding box
         box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) 
-        box3d_pts_3d_velo = calib.project_rect_to_velo(box3d_pts_3d)
+        #box3d_pts_3d_velo = calib.project_rect_to_velo(box3d_pts_3d)
+        box3d_pts_3d_velo = box3d_pts_3d
         # Draw heading arrow
         ori3d_pts_2d, ori3d_pts_3d = utils.compute_orientation_3d(obj, calib.P)
-        ori3d_pts_3d_velo = calib.project_rect_to_velo(ori3d_pts_3d)
+        #ori3d_pts_3d_velo = calib.project_rect_to_velo(ori3d_pts_3d)
+        ori3d_pts_3d_velo = ori3d_pts_3d
         x1,y1,z1 = ori3d_pts_3d_velo[0,:]
         x2,y2,z2 = ori3d_pts_3d_velo[1,:]
         draw_gt_boxes3d([box3d_pts_3d_velo], fig=fig)
-        mlab.plot3d([x1, x2], [y1, y2], [z1,z2], color=(0.5,0.5,0.5),
-            tube_radius=None, line_width=1, figure=fig)
+        #mlab.plot3d([x1, x2], [y1, y2], [z1,z2], color=(0.5,0.5,0.5),
+        #    tube_radius=None, line_width=1, figure=fig)
     mlab.show(1)
 
 def show_lidar_on_image(pc_velo, img, calib, img_width, img_height):
     ''' Project LiDAR points to image '''
-    imgfov_pc_velo, pts_2d, fov_inds = get_lidar_in_image_fov(pc_velo,
-        calib, 0, 0, img_width, img_height, True)
-    imgfov_pts_2d = pts_2d[fov_inds,:]
-    imgfov_pc_rect = calib.project_velo_to_rect(imgfov_pc_velo)
-
+    #imgfov_pc_velo, pts_2d, fov_inds = get_lidar_in_image_fov(pc_velo,
+    #    calib, 0, 0, img_width, img_height, True)
+    #imgfov_pts_2d = pts_2d[fov_inds,:]
+    #imgfov_pc_rect = calib.project_velo_to_rect(imgfov_pc_velo)
+    imgfov_pts_2d = pc_velo
     import matplotlib.pyplot as plt
     cmap = plt.cm.get_cmap('hsv', 256)
     cmap = np.array([cmap(i) for i in range(256)])[:,:3]*255
-
+    print("imgfov_pts_2d.shape[0]",imgfov_pts_2d.shape)
+    maxD = np.max(imgfov_pts_2d)
+    minD = np.min(imgfov_pts_2d)
     for i in range(imgfov_pts_2d.shape[0]):
-        depth = imgfov_pc_rect[i,2]
-        color = cmap[int(640.0/depth),:]
-        cv2.circle(img, (int(np.round(imgfov_pts_2d[i,0])),
-            int(np.round(imgfov_pts_2d[i,1]))),
-            2, color=tuple(color), thickness=-1)
+        for j in range(imgfov_pts_2d.shape[1]):
+            depth = pc_velo[i,j]
+            
+            color = cmap[int(255*(depth-minD)/(maxD-minD)),:]
+            #cv2.circle(img, (50,50),2,color=tuple(color), thickness=-1)
+           
+            cv2.circle(img, (j,i),
+                2, color=tuple(color), thickness=-1)
     Image.fromarray(img).show() 
     return img
 
