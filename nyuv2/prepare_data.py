@@ -337,14 +337,18 @@ def get_box3d_dim_statistics(idx_filename):
 
 def read_det_file(det_filename):
     ''' Parse lines in 2D detection output files '''
-    det_id2str = {1:'Pedestrian', 2:'Car', 3:'Cyclist'}
+    det_id2str = {1:'background', 2:'bathtub',  3:'bed', 4:'bookshelf', 5:'box', \
+               6:'chair', 7:'counter', 8:'desk', 9:'door', 10:'dresser', \
+               11:'garbage bin', 12:'lamp', 13:'monitor', 14:'night stand', \
+               15:'pillow', 16:'sink', 17:'sofa', 18:'table', 19:'television', 20:'toilet'};
     id_list = []
     type_list = []
     prob_list = []
     box2d_list = []
     for line in open(det_filename, 'r'):
         t = line.rstrip().split(" ")
-        id_list.append(int(os.path.basename(t[0]).rstrip('.png')))
+        print(t)
+        id_list.append(int(os.path.basename(t[0]).rstrip('.jpg')))
         type_list.append(det_id2str[int(t[1])])
         prob_list.append(float(t[2]))
         box2d_list.append(np.array([float(t[i]) for i in range(3,7)]))
@@ -392,17 +396,18 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
         if cache_id != data_idx:
             calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
             pc_velo = dataset.get_lidar(data_idx)
-            pc_rect = np.zeros_like(pc_velo)
-            pc_rect[:,0:3] = calib.project_velo_to_rect(pc_velo[:,0:3])
-            pc_rect[:,3] = pc_velo[:,3]
+            pc_rect = pc_velo
+            
             img = dataset.get_image(data_idx)
             img_height, img_width, img_channel = img.shape
-            _, pc_image_coord, img_fov_inds = get_lidar_in_image_fov(\
-                pc_velo[:,0:3], calib, 0, 0, img_width, img_height, True)
-            cache = [calib,pc_rect,pc_image_coord,img_fov_inds]
+            
+            depth = dataset.get_depth(data_idx) #TODO only to mantain names, change
+            pc_image_coord = depth_image_to_coords(depth) #TODO only to mantain names, change
+                        
+            cache = [calib,pc_rect,pc_image_coord]
             cache_id = data_idx
         else:
-            calib,pc_rect,pc_image_coord,img_fov_inds = cache
+            calib,pc_rect,pc_image_coord = cache
 
         if det_type_list[det_idx] not in type_whitelist: continue
 
@@ -412,7 +417,7 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
             (pc_image_coord[:,0]>=xmin) & \
             (pc_image_coord[:,1]<ymax) & \
             (pc_image_coord[:,1]>=ymin)
-        box_fov_inds = box_fov_inds & img_fov_inds
+
         pc_in_box_fov = pc_rect[box_fov_inds,:]
         # Get frustum angle (according to center pixel in 2D BOX)
         box2d_center = np.array([(xmin+xmax)/2.0, (ymin+ymax)/2.0])
@@ -515,7 +520,7 @@ if __name__=='__main__':
         output_prefix = 'frustum_caronly_'
     else:
         type_whitelist = []
-        output_prefix = 'frustum_carpedcyc_'
+        output_prefix = 'frustum_nyuv2_'
 
     if args.gen_train:
         extract_frustum_data(\
@@ -534,6 +539,7 @@ if __name__=='__main__':
             type_whitelist=type_whitelist)
 
     if args.gen_val_rgb_detection:
+        print(BASE_DIR)
         extract_frustum_data_rgb_detection(\
             os.path.join(BASE_DIR, 'rgb_detections/rgb_detection_val.txt'),
             'training',
