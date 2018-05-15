@@ -24,6 +24,7 @@ from train_util import get_batch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
+parser.add_argument('--cpu', action='store_true', help='use CPU instead GPU')
 parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
 parser.add_argument('--model', default='frustum_pointnets_v1', help='Model name [default: frustum_pointnets_v1]')
 parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]')
@@ -42,7 +43,9 @@ GPU_INDEX = FLAGS.gpu
 NUM_POINT = FLAGS.num_point
 MODEL = importlib.import_module(FLAGS.model)
 NUM_CLASSES = 2
-NUM_CHANNEL = 4
+NUM_CHANNEL = 3
+
+LOGDIR = '/tmp/tensorflow_logs/example/'
 
 # Load Frustum Datasets.
 TEST_DATASET = provider.FrustumDataset(npoints=NUM_POINT, split='val',
@@ -54,7 +57,16 @@ def get_session_and_ops(batch_size, num_point):
     create session and return session handle and tensors
     '''
     with tf.Graph().as_default():
-        with tf.device('/gpu:'+str(GPU_INDEX)):
+      
+        device_string = 'specify_a_device_type'
+        if FLAGS.cpu:
+          device_string = '/cpu:0'
+        else:
+          device_string = '/gpu:'+str(GPU_INDEX)
+          
+        print(device_string)
+        
+        with tf.device(device_string):
             pointclouds_pl, one_hot_vec_pl, labels_pl, centers_pl, \
             heading_class_label_pl, heading_residual_label_pl, \
             size_class_label_pl, size_residual_label_pl = \
@@ -72,7 +84,10 @@ def get_session_and_ops(batch_size, num_point):
         config.gpu_options.allow_growth = True
         config.allow_soft_placement = True
         sess = tf.Session(config=config)
+        
+        summary_writer = tf.summary.FileWriter(LOGDIR, graph=tf.get_default_graph())
 
+        print("MODEL_PATH: ",MODEL_PATH)
         # Restore variables from disk.
         saver.restore(sess, MODEL_PATH)
         ops = {'pointclouds_pl': pointclouds_pl,
@@ -123,6 +138,13 @@ def inference(sess, ops, pc, one_hot_vec, batch_size):
                 ep['heading_scores'], ep['heading_residuals'],
                 ep['size_scores'], ep['size_residuals']],
                 feed_dict=feed_dict)
+                
+        print('batch_logits: ',batch_logits)
+        print('batch_centers: ',batch_centers)
+        print('batch_heading_scores: ',batch_heading_scores)
+        print('batch_heading_residuals: ',batch_heading_residuals)
+        print('batch_size_scores: ',batch_size_scores)
+        print('batch_size_residuals: ',batch_size_residuals)
 
         logits[i*batch_size:(i+1)*batch_size,...] = batch_logits
         centers[i*batch_size:(i+1)*batch_size,...] = batch_centers
@@ -157,6 +179,7 @@ def write_detection_results(result_dir, id_list, type_list, box2d_list, center_l
                             size_cls_list, size_res_list, \
                             rot_angle_list, score_list):
     ''' Write frustum pointnets results to KITTI format label files. '''
+    print('MODEL_PATH: ',MODEL_PATH)
     if result_dir is None: return
     results = {} # map from idx to list of strings, each string is a line (without \n)
     for i in range(len(center_list)):
@@ -164,17 +187,33 @@ def write_detection_results(result_dir, id_list, type_list, box2d_list, center_l
         output_str = type_list[i] + " -1 -1 -10 "
         box2d = box2d_list[i]
         output_str += "%f %f %f %f " % (box2d[0],box2d[1],box2d[2],box2d[3])
+        print('center_list[i]: ',center_list[i])
+        print('heading_cls_list[i]: ',heading_cls_list[i])
+        print('heading_res_list[i]: ',heading_res_list[i])
+        print('size_cls_list[i]: ',size_cls_list[i])
+        print('size_res_list[i]: ',size_res_list[i])
+        print('rot_angle_list[i]: ',rot_angle_list[i])
         h,w,l,tx,ty,tz,ry = provider.from_prediction_to_label_format(center_list[i],
             heading_cls_list[i], heading_res_list[i],
             size_cls_list[i], size_res_list[i], rot_angle_list[i])
         score = score_list[i]
+        '''
+        print('h: ',h)
+        print('w: ',w)
+        print('l: ',l)
+        print('tx: ',tx)
+        print('ty: ',ty)
+        print('tz: ',tz)
+        print('ry: ',ry)
+        '''
         output_str += "%f %f %f %f %f %f %f %f" % (h,w,l,tx,ty,tz,ry,score)
         if idx not in results: results[idx] = []
         results[idx].append(output_str)
-
+  
     # Write TXT files
     if not os.path.exists(result_dir): os.mkdir(result_dir)
     output_dir = os.path.join(result_dir, 'data')
+    print("writing results to ",output_dir)
     if not os.path.exists(output_dir): os.mkdir(output_dir)
     for idx in results:
         pred_filename = os.path.join(output_dir, '%06d.txt'%(idx))
@@ -208,12 +247,13 @@ def test_from_rgb_detection(output_filename, result_dir=None):
     onehot_list = []
 
     test_idxs = np.arange(0, len(TEST_DATASET))
-    print(len(TEST_DATASET))
+    print("TEST_DATASET length = ", len(TEST_DATASET))
+    print("BATCH_SIZE = ", BATCH_SIZE)
     batch_size = BATCH_SIZE
     num_batches = int((len(TEST_DATASET)+batch_size-1)/batch_size)
     
     batch_data_to_feed = np.zeros((batch_size, NUM_POINT, NUM_CHANNEL))
-    batch_one_hot_to_feed = np.zeros((batch_size, 3))
+    batch_one_hot_to_feed = np.zeros((batch_size, 20))
     sess, ops = get_session_and_ops(batch_size=batch_size, num_point=NUM_POINT)
     for batch_idx in range(num_batches):
         print('batch idx: %d' % (batch_idx))
@@ -225,14 +265,17 @@ def test_from_rgb_detection(output_filename, result_dir=None):
             get_batch(TEST_DATASET, test_idxs, start_idx, end_idx,
                 NUM_POINT, NUM_CHANNEL, from_rgb_detection=True)
         batch_data_to_feed[0:cur_batch_size,...] = batch_data
+        print("..................:",batch_one_hot_to_feed.shape)
         batch_one_hot_to_feed[0:cur_batch_size,:] = batch_one_hot_vec
 
         # Run one batch inference
-	batch_output, batch_center_pred, \
+        batch_output, batch_center_pred, \
         batch_hclass_pred, batch_hres_pred, \
         batch_sclass_pred, batch_sres_pred, batch_scores = \
             inference(sess, ops, batch_data_to_feed,
                 batch_one_hot_to_feed, batch_size=batch_size)
+        
+        
 	
         for i in range(cur_batch_size):
             ps_list.append(batch_data[i,...])
@@ -307,11 +350,12 @@ def test(output_filename, result_dir=None):
             get_batch(TEST_DATASET, test_idxs, start_idx, end_idx,
                 NUM_POINT, NUM_CHANNEL)
 
-	batch_output, batch_center_pred, \
+        batch_output, batch_center_pred, \
         batch_hclass_pred, batch_hres_pred, \
         batch_sclass_pred, batch_sres_pred, batch_scores = \
             inference(sess, ops, batch_data,
                 batch_one_hot_vec, batch_size=batch_size)
+              
 
         correct_cnt += np.sum(batch_output==batch_label)
 	
@@ -351,6 +395,7 @@ def test(output_filename, result_dir=None):
 
 
 if __name__=='__main__':
+    print(FLAGS.output)
     if FLAGS.from_rgb_detection:
         test_from_rgb_detection(FLAGS.output+'.pickle', FLAGS.output)
     else:

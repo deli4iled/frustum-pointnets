@@ -149,7 +149,7 @@ def random_shift_box2d(box2d, shift_ratio=0.1):
     return np.array([cx2-w2/2.0, cy2-h2/2.0, cx2+w2/2.0, cy2+h2/2.0])
  
 def extract_frustum_data(idx_filename, split, output_filename, viz=False,
-                       perturb_box2d=False, augmentX=1, type_whitelist=['Car']):
+                       perturb_box2d=False, augmentX=1, type_whitelist=[]):
     ''' Extract point clouds and corresponding annotations in frustums
         defined generated from 2D bounding boxes
         Lidar points and 3d boxes are in *rect camera* coord system
@@ -168,10 +168,14 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         None (will write a .pickle file to the disk)
     '''
     print(idx_filename)
+    det_id2str = {0:'background', 1:'bathtub',  2:'bed', 3:'bookshelf', 4:'box', 
+               5:'chair', 6:'counter', 7:'desk', 8:'door', 9:'dresser', 
+               10:'garbage bin', 11:'lamp', 12:'monitor', 13:'night stand', 
+               14:'pillow', 15:'sink', 16:'sofa', 17:'table', 18:'television', 19:'toilet'};
 
     dataset = nyuv2_object(os.path.join(ROOT_DIR,'dataset/NYUv2/object'), split)
     data_idx_list = [int(line.rstrip()) for line in open(idx_filename)]
-    data_idx_list  = [536, 540, 541, 542] #TODO togliere
+    #data_idx_list  = [536, 540, 541, 542] #TODO togliere
     #print("+++++++++++++++++++++++++++**",data_idx_list)
     
     id_list = [] # int number
@@ -272,7 +276,8 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 box3d_list.append(box3d_pts_3d)
                 input_list.append(pc_in_box_fov)
                 label_list.append(label)
-                type_list.append(objects[obj_idx].type)
+                type_list.append(det_id2str[int(objects[obj_idx].type)])
+                print(type_list)
                 heading_list.append(heading_angle)
                 box3d_size_list.append(box3d_size)
                 frustum_angle_list.append(frustum_angle)
@@ -337,10 +342,10 @@ def get_box3d_dim_statistics(idx_filename):
 
 def read_det_file(det_filename):
     ''' Parse lines in 2D detection output files '''
-    det_id2str = {1:'background', 2:'bathtub',  3:'bed', 4:'bookshelf', 5:'box', \
-               6:'chair', 7:'counter', 8:'desk', 9:'door', 10:'dresser', \
-               11:'garbage bin', 12:'lamp', 13:'monitor', 14:'night stand', \
-               15:'pillow', 16:'sink', 17:'sofa', 18:'table', 19:'television', 20:'toilet'};
+    det_id2str = {0:'background', 1:'bathtub',  2:'bed', 3:'bookshelf', 4:'box', 
+               5:'chair', 6:'counter', 7:'desk', 8:'door', 9:'dresser', 
+               10:'garbage bin', 11:'lamp', 12:'monitor', 13:'night stand', 
+               14:'pillow', 15:'sink', 16:'sofa', 17:'table', 18:'television', 19:'toilet'};
     id_list = []
     type_list = []
     prob_list = []
@@ -388,12 +393,14 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
     prob_list = []
     input_list = [] # channel number = 4, xyz,intensity in rect camera coord
     frustum_angle_list = [] # angle of 2d box center from pos x-axis
-
+    
+    print(det_id_list)
     for det_idx in range(len(det_id_list)):
         data_idx = det_id_list[det_idx]
         print('det idx: %d/%d, data idx: %d' % \
             (det_idx, len(det_id_list), data_idx))
         if cache_id != data_idx:
+            
             calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
             pc_velo = dataset.get_lidar(data_idx)
             pc_rect = pc_velo
@@ -401,23 +408,24 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
             img = dataset.get_image(data_idx)
             img_height, img_width, img_channel = img.shape
             
-            depth = dataset.get_depth(data_idx) #TODO only to mantain names, change
-            pc_image_coord = depth_image_to_coords(depth) #TODO only to mantain names, change
+            depth = dataset.get_depth(data_idx)
+            pc_image_coord = depth_image_to_coords(depth) 
                         
             cache = [calib,pc_rect,pc_image_coord]
             cache_id = data_idx
         else:
             calib,pc_rect,pc_image_coord = cache
-
+     
+       
         if det_type_list[det_idx] not in type_whitelist: continue
-
+       
         # 2D BOX: Get pts rect backprojected 
         xmin,ymin,xmax,ymax = det_box2d_list[det_idx]
         box_fov_inds = (pc_image_coord[:,0]<xmax) & \
             (pc_image_coord[:,0]>=xmin) & \
             (pc_image_coord[:,1]<ymax) & \
             (pc_image_coord[:,1]>=ymin)
-
+        #print("box_fov_inds",box_fov_inds)
         pc_in_box_fov = pc_rect[box_fov_inds,:]
         # Get frustum angle (according to center pixel in 2D BOX)
         box2d_center = np.array([(xmin+xmax)/2.0, (ymin+ymax)/2.0])
@@ -439,7 +447,7 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
         prob_list.append(det_prob_list[det_idx])
         input_list.append(pc_in_box_fov)
         frustum_angle_list.append(frustum_angle)
-    
+     
     with open(output_filename,'wb') as fp:
         pickle.dump(id_list, fp)
         pickle.dump(box2d_list,fp)
@@ -519,7 +527,10 @@ if __name__=='__main__':
         type_whitelist = ['Car']
         output_prefix = 'frustum_caronly_'
     else:
-        type_whitelist = []
+        type_whitelist = ['background', 'bathtub', 'bed', 'bookshelf', 'box', \
+               'chair', 'counter', 'desk', 'door', 'dresser', \
+               'garbage bin', 'lamp', 'monitor', 'night stand', \
+               'pillow', 'sink', 'sofa', 'table', 'television', 'toilet'];
         output_prefix = 'frustum_nyuv2_'
 
     if args.gen_train:
