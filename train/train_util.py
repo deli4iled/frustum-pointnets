@@ -29,6 +29,7 @@ def get_batch(dataset, idxs, start_idx, end_idx,
 
     bsize = end_idx-start_idx
     batch_data = np.zeros((bsize, num_point, num_channel))
+    print(batch_data.shape)
     batch_label = np.zeros((bsize, num_point), dtype=np.int32)
     batch_center = np.zeros((bsize, 3))
     batch_heading_class = np.zeros((bsize,), dtype=np.int32)
@@ -37,9 +38,12 @@ def get_batch(dataset, idxs, start_idx, end_idx,
     batch_size_residual = np.zeros((bsize, 3))
     batch_rot_angle = np.zeros((bsize,))
     if dataset.one_hot:
-        batch_one_hot_vec = np.zeros((bsize,3)) # for car,ped,cyc
+        batch_one_hot_vec = np.zeros((bsize,20)) # for car,ped,cyc
     for i in range(bsize):
         if dataset.one_hot:
+            print("-------------------------_",dataset[0])
+            print(idxs)
+            print(i+start_idx)
             ps,seg,center,hclass,hres,sclass,sres,rotangle,onehotvec = \
                 dataset[idxs[i+start_idx]]
             batch_one_hot_vec[i] = onehotvec
@@ -71,7 +75,7 @@ def get_batch_from_rgb_detection(dataset, idxs, start_idx, end_idx,
     batch_rot_angle = np.zeros((bsize,))
     batch_prob = np.zeros((bsize,))
     if dataset.one_hot:
-        batch_one_hot_vec = np.zeros((bsize,3)) # for car,ped,cyc
+        batch_one_hot_vec = np.zeros((bsize,20)) # for car,ped,cyc
     for i in range(bsize):
         if dataset.one_hot:
             ps,rotangle,prob,onehotvec = dataset[idxs[i+start_idx]]

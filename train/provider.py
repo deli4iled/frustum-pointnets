@@ -122,7 +122,7 @@ class FrustumDataset(object):
         self.one_hot = one_hot
         if overwritten_data_path is None:
             overwritten_data_path = os.path.join(ROOT_DIR,
-                'kitti/frustum_carpedcyc_%s.pickle'%(split))
+                'nyuv2/frustum_nyuv2_%s.pickle'%(split)) #TODO pass as an argument
 
         self.from_rgb_detection = from_rgb_detection
         if from_rgb_detection:
@@ -158,8 +158,18 @@ class FrustumDataset(object):
         # Compute one hot vector
         if self.one_hot:
             cls_type = self.type_list[index]
-            assert(cls_type in ['Car', 'Pedestrian', 'Cyclist'])
-            one_hot_vec = np.zeros((3))
+            #print("cls_type",type(cls_type))
+            #cls_class = int(cls_type)
+            #print("cls_type",type(cls_class))
+            #cls_type = g_class2type[cls_type]
+            print("cls_type",cls_type)
+
+            assert(cls_type in ['background', 'bathtub', 'bed', 'bookshelf', 'box', 'chair', 'counter', 'desk', 'door', 'dresser', 
+               'garbage bin', 'lamp', 'monitor', 'night stand', 
+               'pillow', 'sink', 'sofa', 'table', 'television', 'toilet'])
+            one_hot_vec = np.zeros((20))
+            #print(one_hot_vec)
+            #print(g_type2onehotclass)
             one_hot_vec[g_type2onehotclass[cls_type]] = 1
 
         # Get point cloud

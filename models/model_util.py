@@ -11,22 +11,51 @@ import tf_util
 # -----------------
 
 NUM_HEADING_BIN = 12
-NUM_SIZE_CLUSTER = 8 # one cluster for each type
+NUM_SIZE_CLUSTER = 19 # one cluster for each type
 NUM_OBJECT_POINT = 512
-g_type2class={'Car':0, 'Van':1, 'Truck':2, 'Pedestrian':3,
-              'Person_sitting':4, 'Cyclist':5, 'Tram':6, 'Misc':7}
+g_type2class={'background':0 ,'bathtub':1,  'bed':2, 'bookshelf':3, 'box':4, \
+               'chair':5, 'counter':6, 'desk':7, 'door':8, 'dresser':9, \
+               'garbage bin':10, 'lamp':11, 'monitor':12, 'night stand':13, \
+               'pillow':14, 'sink':15, 'sofa':16, 'table':17, 'television':18, 'toilet':19};
+#g_type2class={'Car':0, 'Van':1, 'Truck':2, 'Pedestrian':3,
+#              'Person_sitting':4, 'Cyclist':5, 'Tram':6, 'Misc':7}
 g_class2type = {g_type2class[t]:t for t in g_type2class}
-g_type2onehotclass = {'Car': 0, 'Pedestrian': 1, 'Cyclist': 2}
-g_type_mean_size = {'Car': np.array([3.88311640418,1.62856739989,1.52563191462]),
-                    'Van': np.array([5.06763659,1.9007158,2.20532825]),
-                    'Truck': np.array([10.13586957,2.58549199,3.2520595]),
-                    'Pedestrian': np.array([0.84422524,0.66068622,1.76255119]),
-                    'Person_sitting': np.array([0.80057803,0.5983815,1.27450867]),
-                    'Cyclist': np.array([1.76282397,0.59706367,1.73698127]),
-                    'Tram': np.array([16.17150617,2.53246914,3.53079012]),
-                    'Misc': np.array([3.64300781,1.54298177,1.92320313])}
+#g_type2onehotclass = {'Car': 0, 'Pedestrian': 1, 'Cyclist': 2}
+g_type2onehotclass = g_type2class
+#g_class2type = {'1':'bathtub',  '2':'bed', '3':'bookshelf', '4':'box', 
+#               '5':'chair', '6':'counter', '7':'desk', '8':'door', '9':'dresser', 
+#               '10':'garbage bin', '11':'lamp', '12':'monitor', '13':'night stand', 
+#               '14':'pillow', '15':'sink', '16':'sofa', '17':'table', '18':'television', '19':'toilet'};
+g_type_mean_size = {'background': np.array([1,1,1]), 
+                    'bathtub': np.array([1.625326,0.809367,0.486352]), 
+                    'bed': np.array([2.087165,1.408055,0.667197]),  
+                    'bookshelf': np.array([1.595744,0.485852,1.855462]), 
+                    'box': np.array([0.323555,0.229720,0.234071]), 
+                    'chair': np.array([0.549767,0.486216,0.906589]), 
+                    'counter': np.array([1.928192,0.677248,0.903589]), 
+                    'desk': np.array([1.210407,0.613807,0.735159]), 
+                    'door': np.array([0.790794,0.088156,1.961164]), 
+                    'dresser': np.array([1.186805,0.483385,0.998862]), 
+                    'garbage bin': np.array([0.347029,0.247237,0.460454]), 
+                    'lamp': np.array([0.307856,0.274175,0.713054]), 
+                    'monitor': np.array([0.487594,0.122268,0.409474]), 
+                    'night stand': np.array([0.582511,0.457912,0.640895]), 
+                    'pillow': np.array([0.498065,0.302469,0.313120]), 
+                    'sink': np.array([0.520497,0.410202,0.135680]), 
+                    'sofa': np.array([1.609120,0.900769,0.834336]), 
+                    'table': np.array([1.388311,0.830365,0.654654]), 
+                    'television': np.array([1.044168,0.192994,0.758307]), 
+                    'toilet': np.array([0.722535,0.474899,0.793764])};
+#g_type_mean_size = {'Car': np.array([3.88311640418,1.62856739989,1.52563191462]),
+#                    'Van': np.array([5.06763659,1.9007158,2.20532825]),
+#                    'Truck': np.array([10.13586957,2.58549199,3.2520595]),
+#                    'Pedestrian': np.array([0.84422524,0.66068622,1.76255119]),
+#                    'Person_sitting': np.array([0.80057803,0.5983815,1.27450867]),
+#                    'Cyclist': np.array([1.76282397,0.59706367,1.73698127]),
+#                    'Tram': np.array([16.17150617,2.53246914,3.53079012]),
+#                    'Misc': np.array([3.64300781,1.54298177,1.92320313])}
 g_mean_size_arr = np.zeros((NUM_SIZE_CLUSTER, 3)) # size clustrs
-for i in range(NUM_SIZE_CLUSTER):
+for i in range(1,NUM_SIZE_CLUSTER):
     g_mean_size_arr[i,:] = g_type_mean_size[g_class2type[i]]
 
 # -----------------
@@ -173,8 +202,8 @@ def placeholder_inputs(batch_size, num_point):
         TF placeholders for inputs and ground truths
     '''
     pointclouds_pl = tf.placeholder(tf.float32,
-        shape=(batch_size, num_point, 4))
-    one_hot_vec_pl = tf.placeholder(tf.float32, shape=(batch_size, 3))
+        shape=(batch_size, num_point, 3))
+    one_hot_vec_pl = tf.placeholder(tf.float32, shape=(batch_size, 20))
 
     # labels_pl is for segmentation label
     labels_pl = tf.placeholder(tf.int32, shape=(batch_size, num_point))

@@ -21,6 +21,7 @@ from train_util import get_batch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
+parser.add_argument('--cpu', action='store_true', help='use CPU instead GPU')
 parser.add_argument('--model', default='frustum_pointnets_v1', help='Model name [default: frustum_pointnets_v1]')
 parser.add_argument('--log_dir', default='log', help='Log dir [default: log]')
 parser.add_argument('--num_point', type=int, default=2048, help='Point Number [default: 2048]')
@@ -31,7 +32,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='Initial learnin
 parser.add_argument('--optimizer', default='adam', help='adam or momentum [default: adam]')
 parser.add_argument('--decay_step', type=int, default=200000, help='Decay step for lr decay [default: 200000]')
 parser.add_argument('--decay_rate', type=float, default=0.7, help='Decay rate for lr decay [default: 0.7]')
-parser.add_argument('--no_intensity', action='store_true', help='Only use XYZ for training')
+parser.add_argument('--no_intensity', action='store_true',default=True, help='Only use XYZ for training')
 parser.add_argument('--restore_model_path', default=None, help='Restore model path e.g. log/model.ckpt [default: None]')
 FLAGS = parser.parse_args()
 
@@ -97,7 +98,16 @@ def get_bn_decay(batch):
 def train():
     ''' Main function for training and simple evaluation. '''
     with tf.Graph().as_default():
-        with tf.device('/gpu:'+str(GPU_INDEX)):
+      
+        device_string = 'specify_a_device_type'
+        if FLAGS.cpu:
+          device_string = '/cpu:0'
+        else:
+          device_string = '/gpu:'+str(GPU_INDEX)
+          
+        print(device_string)
+        
+        with tf.device(device_string):
             pointclouds_pl, one_hot_vec_pl, labels_pl, centers_pl, \
             heading_class_label_pl, heading_residual_label_pl, \
             size_class_label_pl, size_residual_label_pl = \
@@ -217,6 +227,10 @@ def train_one_epoch(sess, ops, train_writer):
     train_idxs = np.arange(0, len(TRAIN_DATASET))
     np.random.shuffle(train_idxs)
     num_batches = len(TRAIN_DATASET)/BATCH_SIZE
+    print("\n.TRAIN_DATASET",TRAIN_DATASET)
+    print("BATCH_SIZE",BATCH_SIZE)
+    print("NUM_POINT",NUM_POINT)
+    print("NUM_CHANNEL",NUM_CHANNEL)
 
     # To collect statistics
     total_correct = 0
@@ -230,7 +244,7 @@ def train_one_epoch(sess, ops, train_writer):
     for batch_idx in range(num_batches):
         start_idx = batch_idx * BATCH_SIZE
         end_idx = (batch_idx+1) * BATCH_SIZE
-
+        
         batch_data, batch_label, batch_center, \
         batch_hclass, batch_hres, \
         batch_sclass, batch_sres, \
@@ -265,6 +279,17 @@ def train_one_epoch(sess, ops, train_writer):
         iou2ds_sum += np.sum(iou2ds)
         iou3ds_sum += np.sum(iou3ds)
         iou3d_correct_cnt += np.sum(iou3ds>=0.7)
+        
+        print("-------------------")
+        print("preds_val: ",preds_val)
+        print("correct: ",correct)
+        print("total_correct: ",total_correct)
+        print("total_seen: ",total_seen)
+        print("loss_sum: ",loss_sum)
+        print("iou2ds_sum: ",iou2ds_sum)
+        print("iou3ds_sum: ",iou3ds_sum)
+        print("iou3d_correct_cnt: ",iou3d_correct_cnt)
+        print("-------------------")
 
         if (batch_idx+1)%10 == 0:
             log_string(' -- %03d / %03d --' % (batch_idx+1, num_batches))
