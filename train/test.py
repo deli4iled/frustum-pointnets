@@ -28,7 +28,7 @@ parser.add_argument('--cpu', action='store_true', help='use CPU instead GPU')
 parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')
 parser.add_argument('--model', default='frustum_pointnets_v1', help='Model name [default: frustum_pointnets_v1]')
 parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]')
-parser.add_argument('--batch_size', type=int, default=32, help='batch size for inference [default: 32]')
+parser.add_argument('--batch_size', type=int, default=1, help='batch size for inference [default: 32]')
 parser.add_argument('--output', default='test_results', help='output file/folder name [default: test_results]')
 parser.add_argument('--data_path', default=None, help='frustum dataset pickle filepath [default: None]')
 parser.add_argument('--from_rgb_detection', action='store_true', help='test from dataset files from rgb detection.')
@@ -139,12 +139,12 @@ def inference(sess, ops, pc, one_hot_vec, batch_size):
                 ep['size_scores'], ep['size_residuals']],
                 feed_dict=feed_dict)
                 
-        print('batch_logits: ',batch_logits)
+        #print('batch_logits: ',batch_logits)
         print('batch_centers: ',batch_centers)
-        print('batch_heading_scores: ',batch_heading_scores)
-        print('batch_heading_residuals: ',batch_heading_residuals)
-        print('batch_size_scores: ',batch_size_scores)
-        print('batch_size_residuals: ',batch_size_residuals)
+        #print('batch_heading_scores: ',batch_heading_scores)
+        #print('batch_heading_residuals: ',batch_heading_residuals)
+        #print('batch_size_scores: ',batch_size_scores)
+        #print('batch_size_residuals: ',batch_size_residuals)
 
         logits[i*batch_size:(i+1)*batch_size,...] = batch_logits
         centers[i*batch_size:(i+1)*batch_size,...] = batch_centers
@@ -216,7 +216,7 @@ def write_detection_results(result_dir, id_list, type_list, box2d_list, center_l
     print("writing results to ",output_dir)
     if not os.path.exists(output_dir): os.mkdir(output_dir)
     for idx in results:
-        pred_filename = os.path.join(output_dir, '%06d.txt'%(idx))
+        pred_filename = os.path.join(output_dir, '%d.txt'%(idx))
         fout = open(pred_filename, 'w')
         for line in results[idx]:
             fout.write(line+'\n')
@@ -265,7 +265,6 @@ def test_from_rgb_detection(output_filename, result_dir=None):
             get_batch(TEST_DATASET, test_idxs, start_idx, end_idx,
                 NUM_POINT, NUM_CHANNEL, from_rgb_detection=True)
         batch_data_to_feed[0:cur_batch_size,...] = batch_data
-        print("..................:",batch_one_hot_to_feed.shape)
         batch_one_hot_to_feed[0:cur_batch_size,:] = batch_one_hot_vec
 
         # Run one batch inference
@@ -281,6 +280,7 @@ def test_from_rgb_detection(output_filename, result_dir=None):
             ps_list.append(batch_data[i,...])
             segp_list.append(batch_output[i,...])
             center_list.append(batch_center_pred[i,:])
+            print(center_list)
             heading_cls_list.append(batch_hclass_pred[i])
             heading_res_list.append(batch_hres_pred[i])
             size_cls_list.append(batch_sclass_pred[i])

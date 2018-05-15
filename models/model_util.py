@@ -11,7 +11,7 @@ import tf_util
 # -----------------
 
 NUM_HEADING_BIN = 12
-NUM_SIZE_CLUSTER = 19 # one cluster for each type
+NUM_SIZE_CLUSTER = 20 # one cluster for each type
 NUM_OBJECT_POINT = 512
 g_type2class={'background':0 ,'bathtub':1,  'bed':2, 'bookshelf':3, 'box':4, \
                'chair':5, 'counter':6, 'desk':7, 'door':8, 'dresser':9, \
@@ -55,7 +55,7 @@ g_type_mean_size = {'background': np.array([1,1,1]),
 #                    'Tram': np.array([16.17150617,2.53246914,3.53079012]),
 #                    'Misc': np.array([3.64300781,1.54298177,1.92320313])}
 g_mean_size_arr = np.zeros((NUM_SIZE_CLUSTER, 3)) # size clustrs
-for i in range(1,NUM_SIZE_CLUSTER):
+for i in range(NUM_SIZE_CLUSTER):
     g_mean_size_arr[i,:] = g_type_mean_size[g_class2type[i]]
 
 # -----------------
