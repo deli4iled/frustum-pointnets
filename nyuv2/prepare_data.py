@@ -527,7 +527,7 @@ if __name__=='__main__':
     else:
         type_whitelist = ['background', 'bathtub', 'bed', 'bookshelf', 'box', \
                'chair', 'counter', 'desk', 'door', 'dresser', \
-               'garbage bin', 'lamp', 'monitor', 'night stand', \
+               'garbage_bin', 'lamp', 'monitor', 'night_stand', \
                'pillow', 'sink', 'sofa', 'table', 'television', 'toilet'];
         output_prefix = 'frustum_nyuv2_'
 

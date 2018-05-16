@@ -165,7 +165,7 @@ class FrustumDataset(object):
             print("cls_type",cls_type)
 
             assert(cls_type in ['background', 'bathtub', 'bed', 'bookshelf', 'box', 'chair', 'counter', 'desk', 'door', 'dresser', 
-               'garbage bin', 'lamp', 'monitor', 'night stand', 
+               'garbage_bin', 'lamp', 'monitor', 'night_stand', 
                'pillow', 'sink', 'sofa', 'table', 'television', 'toilet'])
             one_hot_vec = np.zeros((20))
             #print(one_hot_vec)

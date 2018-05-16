@@ -15,7 +15,7 @@ NUM_SIZE_CLUSTER = 20 # one cluster for each type
 NUM_OBJECT_POINT = 512
 g_type2class={'background':0 ,'bathtub':1,  'bed':2, 'bookshelf':3, 'box':4, \
                'chair':5, 'counter':6, 'desk':7, 'door':8, 'dresser':9, \
-               'garbage bin':10, 'lamp':11, 'monitor':12, 'night stand':13, \
+               'garbage_bin':10, 'lamp':11, 'monitor':12, 'night_stand':13, \
                'pillow':14, 'sink':15, 'sofa':16, 'table':17, 'television':18, 'toilet':19};
 #g_type2class={'Car':0, 'Van':1, 'Truck':2, 'Pedestrian':3,
 #              'Person_sitting':4, 'Cyclist':5, 'Tram':6, 'Misc':7}
@@ -36,10 +36,10 @@ g_type_mean_size = {'background': np.array([1,1,1]),
                     'desk': np.array([1.210407,0.613807,0.735159]), 
                     'door': np.array([0.790794,0.088156,1.961164]), 
                     'dresser': np.array([1.186805,0.483385,0.998862]), 
-                    'garbage bin': np.array([0.347029,0.247237,0.460454]), 
+                    'garbage_bin': np.array([0.347029,0.247237,0.460454]), 
                     'lamp': np.array([0.307856,0.274175,0.713054]), 
                     'monitor': np.array([0.487594,0.122268,0.409474]), 
-                    'night stand': np.array([0.582511,0.457912,0.640895]), 
+                    'night_stand': np.array([0.582511,0.457912,0.640895]), 
                     'pillow': np.array([0.498065,0.302469,0.313120]), 
                     'sink': np.array([0.520497,0.410202,0.135680]), 
                     'sofa': np.array([1.609120,0.900769,0.834336]), 
