@@ -14,7 +14,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
 sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(ROOT_DIR, 'mayavi'))
-import kitti_util as utils
 import cPickle as pickle
 from nyuv2_object import *
 import argparse
@@ -170,7 +169,7 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
     print(idx_filename)
     det_id2str = {0:'background', 1:'bathtub',  2:'bed', 3:'bookshelf', 4:'box', 
                5:'chair', 6:'counter', 7:'desk', 8:'door', 9:'dresser', 
-               10:'garbage bin', 11:'lamp', 12:'monitor', 13:'night stand', 
+               10:'garbage_bin', 11:'lamp', 12:'monitor', 13:'night_stand', 
                14:'pillow', 15:'sink', 16:'sofa', 17:'table', 18:'television', 19:'toilet'};
 
     dataset = nyuv2_object(os.path.join(ROOT_DIR,'dataset/NYUv2/object'), split)
@@ -254,6 +253,7 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) 
                 _,inds = extract_pc_in_box3d(pc_in_box_fov, box3d_pts_3d) #poincliud inside box
                 label = np.zeros((pc_in_box_fov.shape[0]))
+                print("---------------------------label: ",label)
                 #print("lllllllllllllllllllllllllllL",np.where(inds==True))
                 label[inds] = 1 #Y 1?
                 # Get 3D BOX heading
@@ -277,7 +277,6 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 input_list.append(pc_in_box_fov)
                 label_list.append(label)
                 type_list.append(det_id2str[int(objects[obj_idx].type)])
-                print(type_list)
                 heading_list.append(heading_angle)
                 box3d_size_list.append(box3d_size)
                 frustum_angle_list.append(frustum_angle)
@@ -289,7 +288,6 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         
     print('Average pos ratio: %f' % (pos_cnt/float(all_cnt)))
     print('Average npoints: %f' % (float(all_cnt)/len(id_list)))
-    print("\n\n\n\----------------------------",label_list)
 
     with open(output_filename,'wb') as fp:
         pickle.dump(id_list, fp)
@@ -344,7 +342,7 @@ def read_det_file(det_filename):
     ''' Parse lines in 2D detection output files '''
     det_id2str = {0:'background', 1:'bathtub',  2:'bed', 3:'bookshelf', 4:'box', 
                5:'chair', 6:'counter', 7:'desk', 8:'door', 9:'dresser', 
-               10:'garbage bin', 11:'lamp', 12:'monitor', 13:'night stand', 
+               10:'garbage_bin', 11:'lamp', 12:'monitor', 13:'night_stand', 
                14:'pillow', 15:'sink', 16:'sofa', 17:'table', 18:'television', 19:'toilet'};
     id_list = []
     type_list = []
