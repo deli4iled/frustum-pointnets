@@ -9,6 +9,7 @@ import numpy as np
 import cv2
 import os
 import scipy.io as sio
+from numpy.linalg import inv
 
 class Object3d(object):
     ''' 3d object label '''
@@ -85,6 +86,8 @@ class Calibration(object):
         #else:
         #    calibs = self.read_calib_file(calib_filepath)
         # Projection matrix from rect camera coord to image2 coord /////---> World2Frame?
+        calib = sio.loadmat(calib_filepath)
+        
         t_x = 2.5031875059141302e-02;
         t_z = -2.9342312935846411e-04;
         t_y = 6.6238747008330102e-04;
@@ -112,6 +115,7 @@ class Calibration(object):
         # Rotation from reference camera coord to rect camera coord ----------------->
         #self.R0 = calibs['R0_rect']
         #self.R0 = np.reshape(self.R0,[3,3])
+        self.Rtilt = calib['Rtilt'].astype('float')
 
         # Camera intrinsics and extrinsics
         self.c_u = self.P[0,2]
@@ -130,7 +134,7 @@ class Calibration(object):
         ''' Read in a calibration file and parse into a dictionary.
         Ref: https://github.com/utiasSTARS/pykitti/blob/master/pykitti/utils.py
         '''
-        filepath='/home/delia/src/Occipital/frustum-pointnets/dataset/KITTI/object/training/calib/000008.txt'
+        print("CALIB FILE: ", filepath)
         data = {}
         with open(filepath, 'r') as f:
             for line in f.readlines():
@@ -387,15 +391,20 @@ def project_to_image(pts_3d, P):
     return pts_2d[:,0:2]
 
 
-def compute_box_3d(obj, P):
+def compute_box_3d(obj, P, rtilt = None):
     ''' Takes an object and a projection matrix (P) and projects the 3d
         bounding box into the image plane.
         Returns:
             corners_2d: (8,2) array in left image coord.
             corners_3d: (8,3) array in in rect camera coord.
     '''
+    print(obj)
     # compute rotational matrix around yaw axis
-    R = roty(obj.ry)   
+    if rtilt is not None:
+      R_rot = roty(obj.ry)
+      R = np.dot(inv(rtilt),R_rot)
+    else:
+      R = roty(obj.ry)
 
     # 3d bounding box dimensions
     l = obj.l;

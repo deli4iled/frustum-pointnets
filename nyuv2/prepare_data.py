@@ -40,12 +40,13 @@ def extract_pc_in_box2d(pc, box2d):
     box2d_roi_inds = in_hull(pc[:,0:2], box2d_corners)
     return pc[box2d_roi_inds,:], box2d_roi_inds
      
-def demo():
-    import mayavi.mlab as mlab
-    from viz_util import draw_lidar, draw_lidar_simple, draw_gt_boxes3d
+def demo(data_idx):
+    #import mayavi.mlab as mlab
+    #from viz_util import draw_lidar, draw_lidar_simple, draw_gt_boxes3d
     print(ROOT_DIR)
+    print("Demo running on image ",data_idx)
     dataset = nyuv2_object(os.path.join(ROOT_DIR, 'dataset/NYUv2/object'))
-    data_idx = 3
+    #data_idx = 44
 
     # Load data from dataset
     objects = dataset.get_label_objects(data_idx)
@@ -69,7 +70,7 @@ def demo():
     show_image_with_boxes(img, objects, calib)
     raw_input()
     
-    
+    '''
     # Show all LiDAR points. Draw 3d box in LiDAR point cloud
     print(' -------- LiDAR points and 3D boxes in velodyne coordinate --------')
     show_lidar_with_boxes(pc_velo, objects, calib)
@@ -131,6 +132,7 @@ def demo():
     draw_lidar(boxfov_pc_velo, fig=fig)
     mlab.show(1)
     raw_input()
+    '''
 
 def random_shift_box2d(box2d, shift_ratio=0.1):
     ''' Randomly shift box center, randomly scale width and height 
@@ -511,6 +513,7 @@ def write_2d_rgb_detection(det_filename, split, result_dir):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--demo', action='store_true', help='Run demo.')
+    parser.add_argument('--idx', type=int, default=1, help='Image index for the demo.')
     parser.add_argument('--gen_train', action='store_true', help='Generate train split frustum data with perturbed GT 2D boxes')
     parser.add_argument('--gen_val', action='store_true', help='Generate val split frustum data with GT 2D boxes')
     parser.add_argument('--gen_val_rgb_detection', action='store_true', help='Generate val split frustum data with RGB detection 2D boxes')
@@ -518,7 +521,7 @@ if __name__=='__main__':
     args = parser.parse_args()
 
     if args.demo:
-        demo()
+        demo(args.idx)
         exit()
 
     if args.car_only:

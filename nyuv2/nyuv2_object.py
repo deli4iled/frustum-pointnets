@@ -65,7 +65,7 @@ class nyuv2_object(object):
 
     def get_calibration(self, idx):
         #assert(idx<self.num_samples) 
-        calib_filename = os.path.join(self.calib_dir, '%d.txt'%(idx))
+        calib_filename = os.path.join(self.calib_dir, '%d.mat'%(idx))
         print("get_calibration",calib_filename)
         return utils.Calibration(calib_filename)
 
@@ -156,7 +156,7 @@ def show_image_with_boxes(img, objects, calib, show3d=True):
     for obj in objects:
         cv2.rectangle(img1, (int(obj.xmin),int(obj.ymin)),
             (int(obj.xmax),int(obj.ymax)), (0,255,0), 2)
-        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) 
+        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P, rtilt = calib.Rtilt) 
         img2 = utils.draw_projected_box3d(img2, box3d_pts_2d) 
     Image.fromarray(img1).show()
     if show3d: 
