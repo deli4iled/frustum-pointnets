@@ -513,7 +513,7 @@ def write_2d_rgb_detection(det_filename, split, result_dir):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--demo', action='store_true', help='Run demo.')
-    parser.add_argument('--idx', type=int, default=1, help='Image index for the demo.')
+    parser.add_argument('--idx', type=int, default=3, help='Image index for the demo.')
     parser.add_argument('--gen_train', action='store_true', help='Generate train split frustum data with perturbed GT 2D boxes')
     parser.add_argument('--gen_val', action='store_true', help='Generate val split frustum data with GT 2D boxes')
     parser.add_argument('--gen_val_rgb_detection', action='store_true', help='Generate val split frustum data with RGB detection 2D boxes')
