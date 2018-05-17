@@ -45,6 +45,44 @@ class Object3d(object):
             (self.h, self.w, self.l))
         print('3d bbox location, ry: (%f, %f, %f), %f' % \
             (self.t[0],self.t[1],self.t[2],self.ry))
+            
+class ObjectGT(object):
+    ''' 3d object from label '''
+    def __init__(self, label_file_line):
+        data = label_file_line.split(' ')
+        data[1:] = [float(x) for x in data[1:]]
+        
+        # extract label, truncation, occlusion
+        self.type = data[0] # 'Car', 'Pedestrian', ...
+        self.truncation = data[1] # truncated pixel ratio [0..1]
+        self.occlusion = int(data[2]) # 0=visible, 1=partly occluded, 2=fully occluded, 3=unknown
+        self.alpha = 0 # object observation angle [-pi..pi]
+
+        # extract 2d bounding box in 0-based coordinates
+        self.xmin = data[4] # left
+        self.ymin = data[5] # top
+        self.xmax = data[6] # right
+        self.ymax = data[7] # bottom
+        self.box2d = np.array([self.xmin,self.ymin,self.xmax,self.ymax])
+        
+        # extract 3d bounding box information
+        self.h = data[8] # box height
+        self.w = data[9] # box width
+        self.l = data[10] # box length (in meters)
+        self.t = (data[11],data[12],data[13]) # location (x,y,z) in camera coord.
+        self.ry = data[14] # yaw angle (around Y-axis in camera coordinates) [-pi..pi]
+        
+        
+    def print_object(self):
+        print('Type: %s' % \
+            (self.type))
+        
+        print('2d bbox (x0,y0,x1,y1): %f, %f, %f, %f' % \
+            (self.xmin, self.ymin, self.xmax, self.ymax))
+        print('3d bbox h,w,l: %f, %f, %f' % \
+            (self.h, self.w, self.l))
+        print('3d bbox location, ry: (%f, %f, %f), %f' % \
+            (self.t[0],self.t[1],self.t[2],self.ry))
 
 
 class Calibration(object):
@@ -302,7 +340,12 @@ def read_label(label_filename, box2d_filename,box3d_filename):
     objects = [Object3d(line) for line in lines] 
     
     return objects
-
+    
+def read_gt_label(label_filename):
+    lines = [line.rstrip() for line in open(label_filename)]
+    objects = [ObjectGT(line) for line in lines]
+    return objects
+    
 def load_image(img_filename):
     return cv2.imread(img_filename)
     
@@ -472,7 +515,7 @@ def compute_orientation_3d(obj, P):
     orientation_2d = project_to_image(np.transpose(orientation_3d), P);
     return orientation_2d, np.transpose(orientation_3d)
 
-def draw_projected_box3d(image, qs, color=(255,255,255), thickness=2):
+def draw_projected_box3d(image, qs, color=(255,0,0), thickness=2):
     ''' Draw 3d bounding box in image
         qs: (8,3) array of vertices for the 3d box in following order:
             1 -------- 0

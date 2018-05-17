@@ -77,6 +77,12 @@ class nyuv2_object(object):
         box3d_filename = os.path.join(self.box3d_dir, '%d.mat'%(idx))
         return utils.read_label(label_filename,box2d_filename, box3d_filename)
         
+    def get_label_gt_objects(self, idx):
+        
+        label_filename = os.path.join("train/detection_results_v1/data/", '%d.txt'%(idx)) #TODO variable for path
+       
+        return utils.read_gt_label(label_filename)
+        
     def get_depth_map(self, idx):
         pass
 
@@ -149,7 +155,7 @@ def show_image_with_boxes(img, objects, calib, show3d=True):
     img1 = np.copy(img) # for 2d bbox
     img2 = np.copy(img) # for 3d bbox
     
-    #obj = objects[3] #TODO togliere
+    #obj = objects[5] #TODO togliere
     #objects = [obj] #TODO togliere
     
     for obj in objects:
