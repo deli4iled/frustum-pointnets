@@ -66,11 +66,10 @@ class nyuv2_object(object):
     def get_calibration(self, idx):
         #assert(idx<self.num_samples) 
         calib_filename = os.path.join(self.calib_dir, '%d.mat'%(idx))
-        print("get_calibration",calib_filename)
         return utils.Calibration(calib_filename)
 
     def get_label_objects(self, idx):
-        print(self.num_samples,self.split)
+        #print(self.num_samples,self.split)
         #assert(idx<self.num_samples and self.split=='training') 
         assert(self.split=='training') 
         label_filename = os.path.join(self.label_dir, '%d.mat'%(idx))
@@ -175,10 +174,11 @@ def get_lidar_in_image_fov(pc_velo, calib, xmin, ymin, xmax, ymax,
     else:
         return imgfov_pc_velo
 
+'''
 def show_lidar_with_boxes(pc_velo, objects, calib,
                           img_fov=False, img_width=None, img_height=None): 
-    ''' Show all LiDAR points.
-        Draw 3d box in LiDAR point cloud (in velo coord system) '''
+        Show all LiDAR points.
+        Draw 3d box in LiDAR point cloud (in velo coord system)
     if 'mlab' not in sys.modules: import mayavi.mlab as mlab
     from viz_util import draw_lidar_simple, draw_lidar, draw_gt_boxes3d
 
@@ -207,7 +207,7 @@ def show_lidar_with_boxes(pc_velo, objects, calib,
         #mlab.plot3d([x1, x2], [y1, y2], [z1,z2], color=(0.5,0.5,0.5),
         #    tube_radius=None, line_width=1, figure=fig)
     mlab.show(1)
-
+'''
 def show_lidar_on_image(pc_velo, img, calib, img_width, img_height):
     ''' Project LiDAR points to image '''
     #imgfov_pc_velo, pts_2d, fov_inds = get_lidar_in_image_fov(pc_velo,
@@ -218,7 +218,7 @@ def show_lidar_on_image(pc_velo, img, calib, img_width, img_height):
     import matplotlib.pyplot as plt
     cmap = plt.cm.get_cmap('hsv', 256)
     cmap = np.array([cmap(i) for i in range(256)])[:,:3]*255
-    print("imgfov_pts_2d.shape[0]",imgfov_pts_2d.shape)
+    #print("imgfov_pts_2d.shape[0]",imgfov_pts_2d.shape)
     maxD = np.max(imgfov_pts_2d)
     minD = np.min(imgfov_pts_2d)
     for i in range(imgfov_pts_2d.shape[0]):

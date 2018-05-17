@@ -252,10 +252,9 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                     box2d_center_rect[0,0])
                 # 3D BOX: Get pts velo in 3d box
                 obj = objects[obj_idx]
-                box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) 
+                box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P, calib.Rtilt) 
                 _,inds = extract_pc_in_box3d(pc_in_box_fov, box3d_pts_3d) #poincliud inside box
                 label = np.zeros((pc_in_box_fov.shape[0]))
-                print("---------------------------label: ",label)
                 #print("lllllllllllllllllllllllllllL",np.where(inds==True))
                 label[inds] = 1 #Y 1?
                 # Get 3D BOX heading
@@ -265,12 +264,9 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 
                 # Reject too far away object or object without points
                 if ymax-ymin<25 or np.sum(label)==0:
-                    #print("ymax-ymin",ymax-ymin)
-                    print("np.sum(label)",np.sum(label))
+                    #print("np.sum(label)",np.sum(label))
                     continue
                 else:
-                    #print("ddgdhghghghgH")
-                    #print("ymax-ymin",ymax-ymin)
                     print("np.sum(label)",np.sum(label))
 
                 id_list.append(data_idx)

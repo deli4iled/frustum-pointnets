@@ -38,14 +38,13 @@ class Object3d(object):
     def print_object(self):
         print('Type: %s' % \
             (self.type))
-        #print('Type, truncation, occlusion, alpha: %s, %d, %d, %f' % \
-        #    (self.type, self.truncation, self.occlusion, self.alpha))
+        
         print('2d bbox (x0,y0,x1,y1): %f, %f, %f, %f' % \
             (self.xmin, self.ymin, self.xmax, self.ymax))
-        #print('3d bbox h,w,l: %f, %f, %f' % \
-        #    (self.h, self.w, self.l))
-        #print('3d bbox location, ry: (%f, %f, %f), %f' % \
-        #    (self.t[0],self.t[1],self.t[2],self.ry))
+        print('3d bbox h,w,l: %f, %f, %f' % \
+            (self.h, self.w, self.l))
+        print('3d bbox location, ry: (%f, %f, %f), %f' % \
+            (self.t[0],self.t[1],self.t[2],self.ry))
 
 
 class Calibration(object):
@@ -128,12 +127,12 @@ class Calibration(object):
         self.b_y = self.P[1,3]/(-self.f_v)
         
         
-   
-
+    #Not used for now
+    '''
     def read_calib_file(self, filepath):
-        ''' Read in a calibration file and parse into a dictionary.
+        Read in a calibration file and parse into a dictionary.
         Ref: https://github.com/utiasSTARS/pykitti/blob/master/pykitti/utils.py
-        '''
+        
         print("CALIB FILE: ", filepath)
         data = {}
         with open(filepath, 'r') as f:
@@ -149,7 +148,7 @@ class Calibration(object):
                     pass
 
         return data
-    
+    '''
     def read_calib_from_video(self, calib_root_dir):
         ''' Read calibration for camera 2 from video calib files.
             there are calib_cam_to_cam and calib_velo_to_cam under the calib_root_dir
@@ -296,7 +295,7 @@ def read_label(label_filename, box2d_filename,box3d_filename):
     boxes2d = sio.loadmat(box2d_filename)
     boxes2d = boxes2d['gt_boxes_sel'].astype(np.int)
     
-    print(box3d_filename)
+    #print(box3d_filename)
     boxes3d = sio.loadmat(box3d_filename)
     boxes3d = boxes3d['gt_boxes_3d'].astype(np.float)
     lines = [str(el1[0])+" "+' '.join(map(str, el2))+" "+' '.join(map(str, el3)) for el1,el2,el3 in zip(labels,boxes2d,boxes3d)]
@@ -384,27 +383,26 @@ def project_to_image(pts_3d, P):
     '''
     n = pts_3d.shape[0]
     pts_3d_extend = np.hstack((pts_3d, np.ones((n,1))))
-    print(('pts_3d_extend shape: ', pts_3d_extend.shape))
+    #print(('pts_3d_extend shape: ', pts_3d_extend.shape))
     pts_2d = np.dot(pts_3d_extend, np.transpose(P)) # nx3
     pts_2d[:,0] /= pts_2d[:,2]
     pts_2d[:,1] /= pts_2d[:,2]
     return pts_2d[:,0:2]
 
 
-def compute_box_3d(obj, P, rtilt = None):
+def compute_box_3d(obj, P, rtilt):
     ''' Takes an object and a projection matrix (P) and projects the 3d
         bounding box into the image plane.
         Returns:
             corners_2d: (8,2) array in left image coord.
             corners_3d: (8,3) array in in rect camera coord.
     '''
-    print(obj)
     # compute rotational matrix around yaw axis
-    if rtilt is not None:
-      R_rot = roty(obj.ry)
-      R = np.dot(inv(rtilt),R_rot)
-    else:
-      R = roty(obj.ry)
+    #if rtilt is not None:
+    R_rot = roty(obj.ry)
+    R = np.dot(inv(rtilt),R_rot)
+    #else:
+    #R = roty(obj.ry)
 
     # 3d bounding box dimensions
     l = obj.l;
