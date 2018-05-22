@@ -130,8 +130,8 @@ class Calibration(object):
         t_y = 6.6238747008330102e-04;
         fx_rgb = 5.1885790117450188e+02;
         fy_rgb = 5.1946961112127485e+02;
-        cx_rgb = 3.2558244941119034e+02;
-        cy_rgb = 2.5373616633400465e+02;
+        cx_rgb = 3.2558244941119034e+02-40;
+        cy_rgb = 2.5373616633400465e+02-44;
         
         fx_d = 5.8262448167737955e+02;
         fy_d = 5.8269103270988637e+02;
@@ -139,12 +139,15 @@ class Calibration(object):
         cy_d = 2.3844389626620386e+02;
         
         #P = [fx_rgb,0.00000,cx_rgb, t_x, 0.00000,fy_rgb,cy_rgb, t_y, 0.00000,0.00000,1.00000, t_z]
-        P = [fx_rgb,0.00000,285.58245, 0, 0.00000,fy_rgb,209.73617, 0, 0.00000,0.00000,1.00000, 0]
+        P = [fx_rgb,0.00000,cx_rgb, 0, 0.00000,fy_rgb,cy_rgb, 0, 0.00000,0.00000,1.00000, 0]
+        print("prima P",P)
+        #P = [fx_rgb,0.00000,285.58245, 0, 0.00000,fy_rgb,209.73617, 0, 0.00000,0.00000,1.00000, 0]
         #P = [fx_d,0.00000,285.58245, 0, 0.00000,fy_d,209.73617, 0, 0.00000,0.00000,1.00000, 0]
         
         #self.P = calibs['P2'] 
         self.P = P
         self.P = np.reshape(self.P, [3,4])
+        print(self.P)
         # Rigid transform from Velodyne coord to reference camera coord ------> extrinsic params of the sensor
         #self.V2C = calibs['Tr_velo_to_cam']
         #self.V2C = np.reshape(self.V2C, [3,4])
@@ -349,7 +352,7 @@ def read_gt_label(label_filename):
 def load_image(img_filename):
     return cv2.imread(img_filename)
     
-def load_velo_scan(velo_filename): #TODO get parameters from calib
+def depth_to_pc(depth, calib): #TODO get parameters from calib
     '''
     [h, w] = size(rawDepth);
     cx = K(1,3); cy = K(2,3);  
@@ -360,31 +363,21 @@ def load_velo_scan(velo_filename): #TODO get parameters from calib
     z3 = rawDepth;
     xyz = cat(3, x3, y3, z3);
     '''
-    
-    dmap_f = sio.loadmat(velo_filename)
-    dmap_f = dmap_f['dmap_f'].astype(np.float)
-    '''
-    fx_d = 5.8262448167737955e+02;
-    fy_d = 5.8269103270988637e+02;
-    cx_d = 3.1304475870804731e+02;
-    cy_d = 2.3844389626620386e+02;
-    '''
-    fx_d = fx_rgb = 5.1885790117450188e+02;
-    fy_d = fy_rgb = 5.1946961112127485e+02;
-    cx_d = cx_rgb = 3.2558244941119034e+02;
-    cx_d = cy_rgb = 2.5373616633400465e+02;
-    K = [fx_d,0.00000,cx_d, 0.00000,fy_d,cy_d, 0.00000,0.00000,1.00000]
-    
-    
-    w,h = dmap_f.shape
+      
+    fx_d = calib.f_u
+    fy_d = calib.f_v
+    cx_d = calib.c_u
+    cy_d = calib.c_v
+ 
+    w,h = depth.shape
 
     xt = np.linspace(1, h,h )
     yt = np.linspace(1, w,w )
     x, y = np.meshgrid(xt, yt)
 
-    x3 = ((x-cx_d)*dmap_f/fx_d).reshape(-1);  
-    y3 = ((y-cy_d)*dmap_f/fy_d).reshape(-1);
-    z3 = dmap_f.reshape(-1);
+    x3 = ((x-cx_d)*depth/fx_d).reshape(-1);  
+    y3 = ((y-cy_d)*depth/fy_d).reshape(-1);
+    z3 = depth.reshape(-1);
     res = np.stack([x3,y3,z3]).T
    
     return res

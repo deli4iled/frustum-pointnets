@@ -16,6 +16,7 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(ROOT_DIR, 'mayavi'))
 import cPickle as pickle
 from nyuv2_object import *
+from nyuv2_util import depth_to_pc
 import argparse
 
 
@@ -63,13 +64,12 @@ def demo(data_idx):
     b = img[...,2].reshape(-1)
     rgb = np.stack([r,g,b]).T.astype(str)
     print("res shape",rgb.shape)
-    pc_velo = dataset.get_lidar(data_idx) #TODO
-    #pc_velo[...,0]=np.repeat(np.random.rand(),239547)
-    #pc_velo[...,1]=np.repeat(np.random.rand(),239547)
-    #pc_velo[...,2]=np.repeat(np.random.rand(),239547)
-    print("pc_velo shape",pc_velo.shape)
-    calib = dataset.get_calibration(data_idx)  #TODO
+    #pc_velo = dataset.get_lidar(data_idx) #TODO
     depth = dataset.get_depth(data_idx) 
+    calib = dataset.get_calibration(data_idx)  #TODO
+
+    pc_velo = depth_to_pc(depth,calib)
+    print("pc_velo shape",pc_velo.shape)
     
     pc = np.concatenate((pc_velo,rgb),axis=1)
     print(pc[3])
