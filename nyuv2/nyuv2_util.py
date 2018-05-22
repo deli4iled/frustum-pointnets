@@ -349,7 +349,7 @@ def read_gt_label(label_filename):
 def load_image(img_filename):
     return cv2.imread(img_filename)
     
-def load_velo_scan(velo_filename):
+def load_velo_scan(velo_filename): #TODO get parameters from calib
     '''
     [h, w] = size(rawDepth);
     cx = K(1,3); cy = K(2,3);  
@@ -363,10 +363,16 @@ def load_velo_scan(velo_filename):
     
     dmap_f = sio.loadmat(velo_filename)
     dmap_f = dmap_f['dmap_f'].astype(np.float)
+    '''
     fx_d = 5.8262448167737955e+02;
     fy_d = 5.8269103270988637e+02;
     cx_d = 3.1304475870804731e+02;
     cy_d = 2.3844389626620386e+02;
+    '''
+    fx_d = fx_rgb = 5.1885790117450188e+02;
+    fy_d = fy_rgb = 5.1946961112127485e+02;
+    cx_d = cx_rgb = 3.2558244941119034e+02;
+    cx_d = cy_rgb = 2.5373616633400465e+02;
     K = [fx_d,0.00000,cx_d, 0.00000,fy_d,cy_d, 0.00000,0.00000,1.00000]
     
     

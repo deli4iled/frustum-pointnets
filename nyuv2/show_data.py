@@ -58,9 +58,25 @@ def demo(data_idx):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
     img_height, img_width, img_channel = img.shape
     print(('Image shape: ', img.shape))
+    r = img[...,0].reshape(-1)
+    g = img[...,1].reshape(-1)
+    b = img[...,2].reshape(-1)
+    rgb = np.stack([r,g,b]).T.astype(str)
+    print("res shape",rgb.shape)
     pc_velo = dataset.get_lidar(data_idx) #TODO
+    #pc_velo[...,0]=np.repeat(np.random.rand(),239547)
+    #pc_velo[...,1]=np.repeat(np.random.rand(),239547)
+    #pc_velo[...,2]=np.repeat(np.random.rand(),239547)
+    print("pc_velo shape",pc_velo.shape)
     calib = dataset.get_calibration(data_idx)  #TODO
     depth = dataset.get_depth(data_idx) 
+    
+    pc = np.concatenate((pc_velo,rgb),axis=1)
+    print(pc[3])
+    print("pc shape",pc.shape)
+    header = "ply \nformat ascii 1.0 \nelement vertex "+str(pc.shape[0])+"\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header"
+    print(header)
+    np.savetxt(str(data_idx)+".ply",pc,header=header,comments="",fmt='%s')
 
     ## Draw lidar in rect camera coord
     #print(' -------- LiDAR points in rect camera coordination --------')

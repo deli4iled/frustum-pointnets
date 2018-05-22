@@ -162,7 +162,7 @@ class FrustumDataset(object):
             #cls_class = int(cls_type)
             #print("cls_type",type(cls_class))
             #cls_type = g_class2type[cls_type]
-            print("cls_type",cls_type)
+            #print("cls_type",cls_type)
 
             assert(cls_type in ['background', 'bathtub', 'bed', 'bookshelf', 'box', 'chair', 'counter', 'desk', 'door', 'dresser', 
                'garbage_bin', 'lamp', 'monitor', 'night_stand', 
