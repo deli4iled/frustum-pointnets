@@ -16,6 +16,7 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(ROOT_DIR, 'mayavi'))
 import cPickle as pickle
 from nyuv2_object import *
+from nyuv2_util import depth_to_pc
 import argparse
 
 
@@ -55,9 +56,10 @@ def demo(data_idx):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
     img_height, img_width, img_channel = img.shape
     print(('Image shape: ', img.shape))
-    pc_velo = dataset.get_lidar(data_idx) #TODO
     calib = dataset.get_calibration(data_idx)  #TODO
     depth = dataset.get_depth(data_idx) 
+    pc_velo = depth_to_pc(depth,calib) #TODO
+
 
     ## Draw lidar in rect camera coord
     #print(' -------- LiDAR points in rect camera coordination --------')
@@ -197,12 +199,14 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
         objects = dataset.get_label_objects(data_idx)
         
-        pc_velo = dataset.get_lidar(data_idx) #TODO take x,y,z coords in camera
-        
+        #pc_velo = dataset.get_lidar(data_idx) #TODO take x,y,z coords in camera
+        calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
+        depth = dataset.get_depth(data_idx) 
+        pc_velo = depth_to_pc(depth,calib) #TODO
         
         
         #pc_rect = np.zeros_like(pc_velo)
-        depth = dataset.get_depth(data_idx) #TODO only to mantain names, change
+        #depth = dataset.get_depth(data_idx) #TODO only to mantain names, change
         pc_image_coord = depth_image_to_coords(depth) #TODO only to mantain names, change
         pc_rect = pc_velo #TODO pc_velo in camera coords, we have depth calibrated --> unnecessary step
         #print("pc_rect.shape",pc_rect.shape)
@@ -215,6 +219,8 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         
         #_, pc_image_coord, img_fov_inds = get_lidar_in_image_fov(pc_velo,
          #   calib, 0, 0, img_width, img_height, True)
+        obj = objects[0] #TODO togliere
+        objects = [obj] #TODO togliere
         for obj_idx in range(len(objects)):
             #if objects[obj_idx].type not in type_whitelist :continue
 
@@ -247,7 +253,7 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 uvdepth[0,0:2] = box2d_center
                 uvdepth[0,2] = 20 # some random depth
                 #print("\nuvdepth",uvdepth)
-                box2d_center_rect = calib.project_image_to_rect(uvdepth)
+                box2d_center_rect = calib.project_image_to_rect(uvdepth) #all pixels in camera coords inside the box
                 frustum_angle = -1 * np.arctan2(box2d_center_rect[0,2],
                     box2d_center_rect[0,0])
                 # 3D BOX: Get pts velo in 3d box
@@ -398,7 +404,9 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
         if cache_id != data_idx:
             
             calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
-            pc_velo = dataset.get_lidar(data_idx)
+            depth = dataset.get_depth(data_idx) 
+            pc_velo = depth_to_pc(depth,calib) #TODO
+            #pc_velo = dataset.get_lidar(data_idx)
             pc_rect = pc_velo
             
             img = dataset.get_image(data_idx)
@@ -513,6 +521,7 @@ if __name__=='__main__':
     parser.add_argument('--gen_train', action='store_true', help='Generate train split frustum data with perturbed GT 2D boxes')
     parser.add_argument('--gen_val', action='store_true', help='Generate val split frustum data with GT 2D boxes')
     parser.add_argument('--gen_val_rgb_detection', action='store_true', help='Generate val split frustum data with RGB detection 2D boxes')
+    parser.add_argument('--gen_train_rgb_detection', action='store_true', help='Generate val split frustum data with RGB detection 2D boxes')
     parser.add_argument('--car_only', action='store_true', help='Only generate cars; otherwise cars, peds and cycs')
     args = parser.parse_args()
 
@@ -552,5 +561,14 @@ if __name__=='__main__':
             os.path.join(BASE_DIR, 'rgb_detections/rgb_detection_val.txt'),
             'training',
             os.path.join(BASE_DIR, output_prefix+'val_rgb_detection.pickle'),
+            viz=False,
+            type_whitelist=type_whitelist) 
+            
+    if args.gen_train_rgb_detection:
+        print(BASE_DIR)
+        extract_frustum_data_rgb_detection(\
+            os.path.join(BASE_DIR, 'rgb_detections/rgb_detection_train.txt'),
+            'training',
+            os.path.join(BASE_DIR, output_prefix+'train_rgb_detection.pickle'),
             viz=False,
             type_whitelist=type_whitelist) 
