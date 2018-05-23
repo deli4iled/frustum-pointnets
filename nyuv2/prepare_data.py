@@ -219,8 +219,8 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         
         #_, pc_image_coord, img_fov_inds = get_lidar_in_image_fov(pc_velo,
          #   calib, 0, 0, img_width, img_height, True)
-        obj = objects[0] #TODO togliere
-        objects = [obj] #TODO togliere
+        #obj = objects[0] #TODO togliere
+        #objects = [obj] #TODO togliere
         for obj_idx in range(len(objects)):
             #if objects[obj_idx].type not in type_whitelist :continue
 
@@ -232,7 +232,7 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 # Augment data by box2d perturbation
                 if perturb_box2d:
                     xmin,ymin,xmax,ymax = random_shift_box2d(box2d)
-                    #print("perturb_box2d",[xmin,ymin,xmax,ymax])
+                    print("perturb_box2d",[xmin,ymin,xmax,ymax])
                 else:
                     xmin,ymin,xmax,ymax = box2d
                 
