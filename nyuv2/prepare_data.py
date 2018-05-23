@@ -55,7 +55,7 @@ def demo(data_idx):
     img = dataset.get_image(data_idx)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
     img_height, img_width, img_channel = img.shape
-    print(('Image shape: ', img.shape))
+    #print(('Image shape: ', img.shape))
     calib = dataset.get_calibration(data_idx)  #TODO
     depth = dataset.get_depth(data_idx) 
     pc_velo = depth_to_pc(depth,calib) #TODO
@@ -232,7 +232,7 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 # Augment data by box2d perturbation
                 if perturb_box2d:
                     xmin,ymin,xmax,ymax = random_shift_box2d(box2d)
-                    print("perturb_box2d",[xmin,ymin,xmax,ymax])
+                    #print("perturb_box2d",[xmin,ymin,xmax,ymax])
                 else:
                     xmin,ymin,xmax,ymax = box2d
                 
@@ -272,8 +272,8 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
                 if ymax-ymin<25 or np.sum(label)==0:
                     #print("np.sum(label)",np.sum(label))
                     continue
-                else:
-                    print("np.sum(label)",np.sum(label))
+                #else:
+                #    print("np.sum(label)",np.sum(label))
 
                 id_list.append(data_idx)
                 box2d_list.append(np.array([xmin,ymin,xmax,ymax]))
@@ -327,7 +327,7 @@ def get_box3d_dim_statistics(idx_filename):
     ry_list = []
     data_idx_list = [int(line.rstrip()) for line in open(idx_filename)]
     for data_idx in data_idx_list:
-        print('------------- ', data_idx)
+        #print('------------- ', data_idx)
         calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
         objects = dataset.get_label_objects(data_idx)
         for obj_idx in range(len(objects)):

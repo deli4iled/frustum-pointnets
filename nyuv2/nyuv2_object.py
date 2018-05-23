@@ -88,9 +88,9 @@ class nyuv2_object(object):
 
     def get_top_down(self, idx):
         pass
-
+'''
 class kitti_object_video(object):
-    ''' Load data for KITTI videos '''
+    ###Load data for KITTI videos
     def __init__(self, img_dir, lidar_dir, calib_dir):
         self.calib = utils.Calibration(calib_dir, from_video=True)
         self.img_dir = img_dir
@@ -119,7 +119,7 @@ class kitti_object_video(object):
 
     def get_calibration(self, unused):
         return self.calib
-
+'''
 def viz_kitti_video():
     video_path = os.path.join(ROOT_DIR, 'dataset/2011_09_26/')
     dataset = kitti_object_video(\
@@ -150,19 +150,19 @@ def depth_image_to_coords(dmap_f):
     z3 = dmap_f.reshape(-1);
     return np.stack([x3,y3,z3]).T
 
-def show_image_with_boxes(img, objects, calib, show3d=True):
+def show_image_with_boxes(img, objects, calib, show3d=True, color=(0,255,0) ):
     ''' Show image with 2D bounding boxes '''
     img1 = np.copy(img) # for 2d bbox
     img2 = np.copy(img) # for 3d bbox
     
-    #obj = objects[5] #TODO togliere
+    #obj = objects[0] #TODO togliere
     #objects = [obj] #TODO togliere
     
     for obj in objects:
         cv2.rectangle(img1, (int(obj.xmin),int(obj.ymin)),
             (int(obj.xmax),int(obj.ymax)), (0,255,0), 2)
         box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P, calib.Rtilt) 
-        img2 = utils.draw_projected_box3d(img2, box3d_pts_2d) 
+        img2 = utils.draw_projected_box3d(img2, box3d_pts_2d,color) 
     Image.fromarray(img1).show()
     if show3d: 
         Image.fromarray(img2).show() 
@@ -180,11 +180,11 @@ def get_lidar_in_image_fov(pc_velo, calib, xmin, ymin, xmax, ymax,
     else:
         return imgfov_pc_velo
 
-'''
+
 def show_lidar_with_boxes(pc_velo, objects, calib,
                           img_fov=False, img_width=None, img_height=None): 
-        Show all LiDAR points.
-        Draw 3d box in LiDAR point cloud (in velo coord system)
+        #Show all LiDAR points.
+        #Draw 3d box in LiDAR point cloud (in velo coord system)
     if 'mlab' not in sys.modules: import mayavi.mlab as mlab
     from viz_util import draw_lidar_simple, draw_lidar, draw_gt_boxes3d
 
@@ -196,11 +196,11 @@ def show_lidar_with_boxes(pc_velo, objects, calib,
             img_width, img_height)
         print(('FOV point num: ', pc_velo.shape[0]))
     draw_lidar(pc_velo, fig=fig)
-
+    
     for obj in objects:
         if obj.type=='DontCare':continue
         # Draw 3d bounding box
-        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P) 
+        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P,calib.Rtilt) 
         #box3d_pts_3d_velo = calib.project_rect_to_velo(box3d_pts_3d)
         box3d_pts_3d_velo = box3d_pts_3d
         # Draw heading arrow
@@ -212,8 +212,9 @@ def show_lidar_with_boxes(pc_velo, objects, calib,
         draw_gt_boxes3d([box3d_pts_3d_velo], fig=fig)
         #mlab.plot3d([x1, x2], [y1, y2], [z1,z2], color=(0.5,0.5,0.5),
         #    tube_radius=None, line_width=1, figure=fig)
+    
     mlab.show(1)
-'''
+
 def show_lidar_on_image(pc_velo, img, calib, img_width, img_height):
     ''' Project LiDAR points to image '''
     #imgfov_pc_velo, pts_2d, fov_inds = get_lidar_in_image_fov(pc_velo,

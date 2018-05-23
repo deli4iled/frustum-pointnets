@@ -359,7 +359,7 @@ def from_prediction_to_label_format(center, angle_class, angle_res,\
     l,w,h = class2size(size_class, size_res)
     ry = class2angle(angle_class, angle_res, NUM_HEADING_BIN) + rot_angle
     tx,ty,tz = rotate_pc_along_y(np.expand_dims(center,0),-rot_angle).squeeze()
-    ty += h/2.0
+    #ty += h/2.0
     return h,w,l,tx,ty,tz,ry
 
 if __name__=='__main__':

@@ -140,14 +140,14 @@ class Calibration(object):
         
         #P = [fx_rgb,0.00000,cx_rgb, t_x, 0.00000,fy_rgb,cy_rgb, t_y, 0.00000,0.00000,1.00000, t_z]
         P = [fx_rgb,0.00000,cx_rgb, 0, 0.00000,fy_rgb,cy_rgb, 0, 0.00000,0.00000,1.00000, 0]
-        print("prima P",P)
+        #print("prima P",P)
         #P = [fx_rgb,0.00000,285.58245, 0, 0.00000,fy_rgb,209.73617, 0, 0.00000,0.00000,1.00000, 0]
         #P = [fx_d,0.00000,285.58245, 0, 0.00000,fy_d,209.73617, 0, 0.00000,0.00000,1.00000, 0]
         
         #self.P = calibs['P2'] 
         self.P = P
         self.P = np.reshape(self.P, [3,4])
-        print(self.P)
+        #print(self.P)
         # Rigid transform from Velodyne coord to reference camera coord ------> extrinsic params of the sensor
         #self.V2C = calibs['Tr_velo_to_cam']
         #self.V2C = np.reshape(self.V2C, [3,4])
@@ -466,7 +466,7 @@ def compute_box_3d(obj, P, rtilt):
     x_corners = [l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2,l/2];
     y_corners = [h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2];
     z_corners = [w/2, w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2];
-
+    
     # rotate and translate 3d bounding box
     corners_3d = np.dot(R, np.vstack([x_corners,y_corners,z_corners]))
     #print corners_3d.shape

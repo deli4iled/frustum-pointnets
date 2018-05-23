@@ -63,8 +63,8 @@ def draw_lidar(pc, color=None, fig=None, bgcolor=(0,0,0), pts_scale=1, pts_mode=
 
     # draw fov (todo: update to real sensor spec.)
     fov=np.array([  # 45 degree
-        [20., 20., 0.,0.],
-        [20.,-20., 0.,0.],
+        [2., 0., -2.,0.],
+        [-2., 0., -2.,0.],
     ],dtype=np.float64)
     
     mlab.plot3d([0, fov[0,0]], [0, fov[0,1]], [0, fov[0,2]], color=(1,1,1), tube_radius=None, line_width=1, figure=fig)
@@ -82,16 +82,19 @@ def draw_lidar(pc, color=None, fig=None, bgcolor=(0,0,0), pts_scale=1, pts_mode=
     x2 = TOP_X_MAX
     y1 = TOP_Y_MIN
     y2 = TOP_Y_MAX
-    mlab.plot3d([x1, x1], [y1, y2], [0,0], color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
-    mlab.plot3d([x2, x2], [y1, y2], [0,0], color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
-    mlab.plot3d([x1, x2], [y1, y1], [0,0], color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
-    mlab.plot3d([x1, x2], [y2, y2], [0,0], color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
+    z1 = TOP_Z_MIN
+    z2 = TOP_Z_MAX
+    #mlab.plot3d([z1, z1], [0,0], [x1, x2],  color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
+    #mlab.plot3d([z2, z2], [0,0], [x1, x2], color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
+    #mlab.plot3d([z1, z2], [0,0], [x1, x2], color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
+    #mlab.plot3d([z1, z2], [0,0], [x1, x2], color=(0.5,0.5,0.5), tube_radius=0.1, line_width=1, figure=fig)
     
     #mlab.orientation_axes()
-    mlab.view(azimuth=180, elevation=70, focalpoint=[ 12.0909996 , -1.04700089, -2.03249991], distance=62.0, figure=fig)
+    #mlab.view(azimuth=180, elevation=70, focalpoint=[ 12.0909996 , -1.04700089, -2.03249991], distance=62.0, figure=fig)
+    mlab.view(azimuth=-90, distance=62.0, figure=fig)
     return fig
 
-def draw_gt_boxes3d(gt_boxes3d, fig, color=(1,1,1), line_width=1, draw_text=True, text_scale=(1,1,1), color_list=None):
+def draw_gt_boxes3d(gt_boxes3d, fig, color=(1,1,1), line_width=1, draw_text=False, text_scale=(1,1,1), color_list=None):
     ''' Draw 3D bounding boxes
     Args:
         gt_boxes3d: numpy array (n,8,3) for XYZs of the box corners
