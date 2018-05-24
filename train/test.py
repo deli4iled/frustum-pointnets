@@ -255,6 +255,11 @@ def test_from_rgb_detection(output_filename, result_dir=None):
     batch_data_to_feed = np.zeros((batch_size, NUM_POINT, NUM_CHANNEL))
     batch_one_hot_to_feed = np.zeros((batch_size, 20))
     sess, ops = get_session_and_ops(batch_size=batch_size, num_point=NUM_POINT)
+    
+    num_images = len(TEST_DATASET)
+    import time
+    start_time = time.time()
+    
     for batch_idx in range(num_batches):
         print('batch idx: %d' % (batch_idx))
         start_idx = batch_idx * batch_size
@@ -316,6 +321,7 @@ def test_from_rgb_detection(output_filename, result_dir=None):
         to_fill_filename_list = [line.rstrip()+'.txt' \
             for line in open(FLAGS.idx_path)]
         fill_files(output_dir, to_fill_filename_list)
+    print("--- Time elapsed per image: %s seconds ---" % ((time.time() - start_time)/num_images))
 
 def test(output_filename, result_dir=None):
     ''' Test frustum pointnets with GT 2D boxes.

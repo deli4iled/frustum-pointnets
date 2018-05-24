@@ -170,6 +170,9 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
     Output:
         None (will write a .pickle file to the disk)
     '''
+    import time
+    start_time = time.time()
+    
     print(idx_filename)
     det_id2str = {0:'background', 1:'bathtub',  2:'bed', 3:'bookshelf', 4:'box', 
                5:'chair', 6:'counter', 7:'desk', 8:'door', 9:'dresser', 
@@ -194,6 +197,7 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
 
     pos_cnt = 0
     all_cnt = 0
+    num_images = len(data_idx_list)
     for data_idx in data_idx_list:
         print('Image number', data_idx)
         calib = dataset.get_calibration(data_idx) # 3 by 4 matrix
@@ -304,6 +308,9 @@ def extract_frustum_data(idx_filename, split, output_filename, viz=False,
         pickle.dump(box3d_size_list, fp)
         pickle.dump(frustum_angle_list, fp)
     
+    print("--- Time elapsed per image: %s seconds ---" % ((time.time() - start_time)/num_images))
+
+
     if viz:
         import mayavi.mlab as mlab
         for i in range(10):
@@ -382,6 +389,9 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
     Output:
         None (will write a .pickle file to the disk)
     '''
+    import time
+    start_time = time.time()
+    
     print(det_filename)
     dataset = nyuv2_object(os.path.join(ROOT_DIR, 'dataset/NYUv2/object'), split)
     det_id_list, det_type_list, det_box2d_list, det_prob_list = \
@@ -396,6 +406,8 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
     input_list = [] # channel number = 4, xyz,intensity in rect camera coord
     frustum_angle_list = [] # angle of 2d box center from pos x-axis
     
+    num_images = len(det_id_list)
+
     print(det_id_list)
     for det_idx in range(len(det_id_list)):
         data_idx = det_id_list[det_idx]
@@ -460,6 +472,8 @@ def extract_frustum_data_rgb_detection(det_filename, split, output_filename,
         pickle.dump(frustum_angle_list, fp)
         pickle.dump(prob_list, fp)
     
+    print("--- Time elapsed per image: %s seconds ---" % ((time.time() - start_time)/num_images))
+
     if viz:
         import mayavi.mlab as mlab
         for i in range(10):

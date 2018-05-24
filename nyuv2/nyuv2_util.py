@@ -50,6 +50,7 @@ class ObjectGT(object):
     ''' 3d object from label '''
     def __init__(self, label_file_line):
         data = label_file_line.split(' ')
+        print(data)
         data[1:] = [float(x) for x in data[1:]]
         
         # extract label, truncation, occlusion
@@ -71,6 +72,7 @@ class ObjectGT(object):
         self.l = data[10] # box length (in meters)
         self.t = (data[11],data[12],data[13]) # location (x,y,z) in camera coord.
         self.ry = data[14] # yaw angle (around Y-axis in camera coordinates) [-pi..pi]
+        self.score = data[15] # score
         
         
     def print_object(self):
@@ -514,7 +516,7 @@ def compute_orientation_3d(obj, P):
     orientation_2d = project_to_image(np.transpose(orientation_3d), P);
     return orientation_2d, np.transpose(orientation_3d)
 
-def draw_projected_box3d(image, qs, color=(255,0,0), thickness=2):
+def draw_projected_box3d(image, qs, color=(255,0,0), thickness=2,cs_score="",label=""):
     ''' Draw 3d bounding box in image
         qs: (8,3) array of vertices for the 3d box in following order:
             1 -------- 0
@@ -537,4 +539,7 @@ def draw_projected_box3d(image, qs, color=(255,0,0), thickness=2):
 
        i,j=k,k+4
        cv2.line(image, (qs[i,0],qs[i,1]), (qs[j,0],qs[j,1]), color, thickness, cv2.LINE_AA)
+
+    cv2.putText(image, cs_score, (qs[4,0],qs[4,1]), cv2.FONT_HERSHEY_DUPLEX, 0.6, color, 1)
+    cv2.putText(image, label, (10,30), cv2.FONT_HERSHEY_DUPLEX, 1, (255,0,0), 1)
     return image

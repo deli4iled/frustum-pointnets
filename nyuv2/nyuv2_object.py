@@ -150,22 +150,147 @@ def depth_image_to_coords(dmap_f):
     z3 = dmap_f.reshape(-1);
     return np.stack([x3,y3,z3]).T
 
-def show_image_with_boxes(img, objects, calib, show3d=True, color=(0,255,0) ):
+def show_image_with_boxes(img, objects, calib, show3d=True, color=(0,255,0), gt=True ):
     ''' Show image with 2D bounding boxes '''
     img1 = np.copy(img) # for 2d bbox
     img2 = np.copy(img) # for 3d bbox
-    
+    label="GT"
     #obj = objects[0] #TODO togliere
     #objects = [obj] #TODO togliere
-    
     for obj in objects:
+        
+        if(len(obj.type)>2): #results label are literals
+            obj_type = labelName2classNum(obj.type)
+        else:
+            obj_type = int(obj.type) 
+
+        label_color = class2color(obj_type) 
         cv2.rectangle(img1, (int(obj.xmin),int(obj.ymin)),
-            (int(obj.xmax),int(obj.ymax)), (0,255,0), 2)
+            (int(obj.xmax),int(obj.ymax)), label_color, 2)
+        #s = '%s/%.3f' % (classes_names[i], scores[i])
+        score = 1
+        if hasattr(obj, 'score'):
+            score = obj.score
+        class_name = classNum2labelName(obj_type)
+        s = '%s/%.3f' % (class_name, score)
+        p1 = (int(obj.ymin)-5, int(obj.xmin))
+        cv2.putText(img1, s, p1[::-1], cv2.FONT_HERSHEY_DUPLEX, 0.6, label_color, 1)
+        if not gt:
+            label = "Results"
+        cv2.putText(img1, label, (10,30), cv2.FONT_HERSHEY_DUPLEX, 1, (255,0,0), 1)
         box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P, calib.Rtilt) 
-        img2 = utils.draw_projected_box3d(img2, box3d_pts_2d,color) 
+        img2 = utils.draw_projected_box3d(img2, box3d_pts_2d,label_color,cs_score=s, label=label) 
     Image.fromarray(img1).show()
     if show3d: 
         Image.fromarray(img2).show() 
+
+def save_gt_and_results(img, objects1, objects2, calib, name="test"):
+    img1 = np.copy(img) # for 2d bbox
+    img2 = np.copy(img) # for 3d bbox
+    img3 = np.copy(img) # for 2d bbox
+    img4 = np.copy(img) # for 3d bbox
+    
+    label="GT"
+    #GT
+    for obj in objects1:
+        
+        if(len(obj.type)>2): #results label are literals
+            obj_type = labelName2classNum(obj.type)
+        else:
+            obj_type = int(obj.type) 
+
+        label_color = class2color(obj_type) 
+        cv2.rectangle(img1, (int(obj.xmin),int(obj.ymin)),
+            (int(obj.xmax),int(obj.ymax)), label_color, 2)
+
+        score = 1
+        if hasattr(obj, 'score'):
+            score = obj.score
+        class_name = classNum2labelName(obj_type)
+        s = '%s/%.3f' % (class_name, score)
+        p1 = (int(obj.ymin)-5, int(obj.xmin))
+        cv2.putText(img1, s, p1[::-1], cv2.FONT_HERSHEY_DUPLEX, 0.6, label_color, 1)
+        
+        label = "GT"
+        cv2.putText(img1, label, (10,30), cv2.FONT_HERSHEY_DUPLEX, 1, (255,0,0), 1)
+        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P, calib.Rtilt) 
+        if(box3d_pts_2d is None): #Why?
+            continue
+        img2 = utils.draw_projected_box3d(img2, box3d_pts_2d,label_color,cs_score=s, label=label) 
+    
+    for obj in objects2:
+        
+        if(len(obj.type)>2): #results label are literals
+            obj_type = labelName2classNum(obj.type)
+        else:
+            obj_type = int(obj.type) 
+
+        label_color = class2color(obj_type) 
+        cv2.rectangle(img3, (int(obj.xmin),int(obj.ymin)),
+            (int(obj.xmax),int(obj.ymax)), label_color, 2)
+
+        score = 1
+        if hasattr(obj, 'score'):
+            score = obj.score
+        class_name = classNum2labelName(obj_type)
+        s = '%s/%.3f' % (class_name, score)
+        p1 = (int(obj.ymin)-5, int(obj.xmin))
+        cv2.putText(img3, s, p1[::-1], cv2.FONT_HERSHEY_DUPLEX, 0.6, label_color, 1)
+        
+        label = "Results"
+        cv2.putText(img3, label, (10,30), cv2.FONT_HERSHEY_DUPLEX, 1, (255,0,0), 1)
+        box3d_pts_2d, box3d_pts_3d = utils.compute_box_3d(obj, calib.P, calib.Rtilt) 
+        if(box3d_pts_2d is None): #Why?
+            continue
+        img4 = utils.draw_projected_box3d(img4, box3d_pts_2d,label_color,cs_score=s, label=label) 
+    
+    
+    
+    
+    
+    
+    width, height = (561,427)
+    
+    total_width = 2*width
+    max_height = 2*height
+    
+    
+    new_im = Image.new('RGB', (total_width, max_height))
+   
+
+    new_im.paste(Image.fromarray(img1), (0,0))
+    new_im.paste(Image.fromarray(img2), (561,0))
+    new_im.paste(Image.fromarray(img3), (0,427))
+    new_im.paste(Image.fromarray(img4), (561,427))
+
+    #new_im.show()
+    new_im.save('results/'+name+'.jpg')
+    
+    
+    
+def class2color(i):
+    colors = [(255, 255, 255), (31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),    
+                 (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),    
+                 (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),    
+                 (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),    
+                 (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]
+    return colors[i]
+
+def classNum2labelName(i):
+    classes = ['background', 'bathtub', 'bed', 'bookshelf', 'box', 
+               'chair', 'counter', 'desk', 'door', 'dresser', 
+               'garbage_bin', 'lamp', 'monitor', 'night_stand', 
+               'pillow', 'sink', 'sofa', 'table', 'television', 'toilet'];
+    return classes[i]
+
+def labelName2classNum(className):
+    classes = ['background', 'bathtub', 'bed', 'bookshelf', 'box', 
+               'chair', 'counter', 'desk', 'door', 'dresser', 
+               'garbage_bin', 'lamp', 'monitor', 'night_stand', 
+               'pillow', 'sink', 'sofa', 'table', 'television', 'toilet'];
+    return classes.index(className)
+    
+    
 
 def get_lidar_in_image_fov(pc_velo, calib, xmin, ymin, xmax, ymax,
                            return_more=False, clip_distance=2.0):
