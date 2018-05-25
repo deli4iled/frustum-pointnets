@@ -44,41 +44,33 @@ def extract_pc_in_box2d(pc, box2d):
 
 
 
-def demo(data_idx):
+def demo(data_idxs,save):
     #import mayavi.mlab as mlab
     #from viz_util import draw_lidar, draw_lidar_simple, draw_gt_boxes3d
     print(ROOT_DIR)
-    print("Demo running on image ",data_idx)
     dataset = nyuv2_object(os.path.join(ROOT_DIR, 'dataset/NYUv2/object'))
-    data_idxs = ['957','958','963','964','969','978','979','980','981','982','983','984','985','986','987','988','989','990','996','997','998','999','1000','1005','1006','1007','1008','1009','1013','1014','1015','1016','1017','1018','1019','1020','1024','1025','1026','1027','1028','1029','1030','1031','1035','1036','1037','1040','1041','1042','1043','1044','1045','1046','1047','1050','1051','1054','1055','1056','1059','1060','1061','1062','1063','1064','1065','1066','1067','1068','1069','1070','1071','1072','1073','1074','1085','1086','1087','1097','1105','1110','1111','1112','1113','1114','1115','1116','1120','1121','1122','1132','1133','1134','1137','1138','1139','1140','1141','1142','1143','1159','1160','1161','1168','1169','1172','1173','1177','1178','1185','1186','1187','1188','1189','1190','1191','1197','1198','1199','1200','1213','1214','1215','1221','1222','1223','1224','1225','1231','1232','1236','1237','1238','1239','1240','1241','1242','1243','1244','1245','1246','1251','1252','1253','1266','1267','1268','1269','1270','1271','1272','1274','1281','1283','1284','1296','1300','1301','1309','1310','1311','1312','1313','1316','1317','1318','1319','1320','1321','1322','1323','1324','1325','1326','1327','1328','1333','1334','1341','1342','1343','1344','1345','1346','1350','1351','1352','1357','1358','1359','1360','1361','1362','1363','1366','1367','1370','1371','1372','1373','1374','1375','1376','1377','1378','1379','1380','1381','1382','1383','1392','1393','1402','1403','1404','1405','1406','1415','1416','1417','1418','1419','1420','1425','1426','1427','1428','1429','1434','1435','1436','1437','1439','1440']
-
+   
 
     for idx in data_idxs:
         data_idx = int(idx)
         # Load data from dataset
         objects = dataset.get_label_objects(data_idx)
+        
         #objects[0].print_object()
+        
         img = dataset.get_image(data_idx)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
         img_height, img_width, img_channel = img.shape
-        #print(('Image shape: ', img.shape))
+        #To save pointcloud
         r = img[...,0].reshape(-1)
         g = img[...,1].reshape(-1)
         b = img[...,2].reshape(-1)
         rgb = np.stack([r,g,b]).T.astype(str)
-        #print("res shape",rgb.shape)
-        #pc_velo = dataset.get_lidar(data_idx) #TODO
         depth = dataset.get_depth(data_idx) 
         calib = dataset.get_calibration(data_idx)  #TODO
-
-        pc_velo = depth_to_pc(depth,calib)
-        #print("pc_velo shape",pc_velo.shape)
-        
+        pc_velo = depth_to_pc(depth,calib)        
         pc = np.concatenate((pc_velo,rgb),axis=1)
-        #print(pc[3])
-        #print("pc shape",pc.shape)
         header = "ply \nformat ascii 1.0 \nelement vertex "+str(pc.shape[0])+"\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header"
-        #print(header)
         #np.savetxt(str(data_idx)+".ply",pc,header=header,comments="",fmt='%s')
 
         ## Draw lidar in rect camera coord
@@ -100,8 +92,9 @@ def demo(data_idx):
         # Draw 2d and 3d boxes on image
         print(' -------- 2D/3D bounding boxes in images --------')
         print(idx)
-        save_gt_and_results(img, objects, objects_gt, calib,idx)
-
+        print(save)
+        save_gt_and_results(img, objects, objects_gt, calib,idx, save=save)
+        raw_input()
         #show_image_with_boxes(img, objects, calib, color=(255,255,255))
         #show_image_with_boxes(img, objects_gt, calib, gt=False)
         #raw_input()
@@ -109,7 +102,7 @@ def demo(data_idx):
         #raw_input()
         #show_lidar_with_boxes(pc_velo, objects, calib)
         #show_lidar_with_boxes(pc_velo, objects_gt, calib)
-        #raw_input()
+       
     '''
     # Show all LiDAR points. Draw 3d box in LiDAR point cloud
     print(' -------- LiDAR points and 3D boxes in velodyne coordinate --------')
@@ -548,13 +541,16 @@ def write_2d_rgb_detection(det_filename, split, result_dir):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--demo', action='store_true', help='Run demo.')
-    parser.add_argument('--idx', type=int, default=3, help='Image index for the demo.')
-    parser.add_argument('--gen_train', action='store_true', help='Generate train split frustum data with perturbed GT 2D boxes')
-    parser.add_argument('--gen_val', action='store_true', help='Generate val split frustum data with GT 2D boxes')
-    parser.add_argument('--gen_val_rgb_detection', action='store_true', help='Generate val split frustum data with RGB detection 2D boxes')
-    parser.add_argument('--car_only', action='store_true', help='Only generate cars; otherwise cars, peds and cycs')
+    parser.add_argument('--save', action='store_true', help='Save the results')
+    parser.add_argument('--idx', type=int, default=-1, help='Run only on a specified index')
+    parser.add_argument('--file_index', default="nyuv2/image_sets/val.txt", help='Path to file with indexes')
     args = parser.parse_args()
-
-    demo(args.idx)
+    
+    if(args.idx!=-1):
+        demo([str(args.idx)],args.save)
+    else:  
+        index_filename=args.file_index
+        data_idxs = [line.rstrip() for line in open(index_filename)]
+        demo(data_idxs,args.save)
+        
     exit()

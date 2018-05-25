@@ -150,7 +150,7 @@ def depth_image_to_coords(dmap_f):
     z3 = dmap_f.reshape(-1);
     return np.stack([x3,y3,z3]).T
 
-def show_image_with_boxes(img, objects, calib, show3d=True, color=(0,255,0), gt=True ):
+def show_image_with_boxes(img, objects, calib, show3d=True, color=(0,255,0), gt=True):
     ''' Show image with 2D bounding boxes '''
     img1 = np.copy(img) # for 2d bbox
     img2 = np.copy(img) # for 3d bbox
@@ -184,7 +184,7 @@ def show_image_with_boxes(img, objects, calib, show3d=True, color=(0,255,0), gt=
     if show3d: 
         Image.fromarray(img2).show() 
 
-def save_gt_and_results(img, objects1, objects2, calib, name="test"):
+def save_gt_and_results(img, objects1, objects2, calib, name="test",save=False ):
     img1 = np.copy(img) # for 2d bbox
     img2 = np.copy(img) # for 3d bbox
     img3 = np.copy(img) # for 2d bbox
@@ -263,8 +263,10 @@ def save_gt_and_results(img, objects1, objects2, calib, name="test"):
     new_im.paste(Image.fromarray(img3), (0,427))
     new_im.paste(Image.fromarray(img4), (561,427))
 
-    #new_im.show()
-    new_im.save('results/'+name+'.jpg')
+    if save==True:
+        new_im.save('results/'+name+'.jpg')
+    else:
+        new_im.show()
     
     
     
